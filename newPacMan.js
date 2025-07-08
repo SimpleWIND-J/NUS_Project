@@ -6,7 +6,8 @@
 
 //import part
 import {
-    set_dimensions,set_fps,
+    set_dimensions,set_fps,enable_debug,
+    update_loop,build_game,
 } from 'arcade_2d';
 
 
@@ -36,6 +37,9 @@ function init_game() {
 init_game();
 
 
+
+
+
 // ===  Aryaman: Player Control ===
 
 function setup_player() {
@@ -51,6 +55,9 @@ function update_player_movement() {
 }
 
 
+
+
+
 // ===  Freya: Maze and Dots ===
 
 function setup_maze_and_dots() {
@@ -59,6 +66,9 @@ function setup_maze_and_dots() {
     // Create dots using create_circle, store in dots[]
     // Set fixed positions for dots
 }
+
+
+
 
 
 // === Jiayan: Monster Setup and Behavior ===
@@ -73,6 +83,9 @@ function update_monsters() {
     // Move each monster by its direction
     // If collision with wall, pick new random direction
 }
+
+
+
 
 
 // === JIAO: Dot Collection and Score ===
@@ -93,6 +106,8 @@ function check_dot_collisions() {
     //       increment score
     //       update_score_display()
 }
+
+
 
 
 // ===  Main Game Loop ===
