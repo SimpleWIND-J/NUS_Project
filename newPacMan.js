@@ -4,6 +4,10 @@
 // ======================================
 
 
+//ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
+
+
+
 //import part
 import {
     set_dimensions,set_fps,enable_debug,debug_log,
@@ -103,14 +107,15 @@ function game_loop(game_state) {
     update_score_display();
     
 
-    // Optional: win condition check?
+    // Optional: win or lose condition check?
 }
 
 
 
 // === 🟩 Game Entry Point ===
 
-//ATTENTION:CANNOT USE A  FUNCTION TO WRAP THE FUNCTION "BUILD_GAME"!!
+//ATTENTION:CANNOT USE A FUNCTION TO WRAP THE FUNCTION "BUILD_GAME"!!
+//OTHERWISE THERE WILL BE NO OUTPUT AT ALL
 
 //function init_game() {
     set_dimensions([800, 800]);   // Game canvas size
