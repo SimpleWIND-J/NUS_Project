@@ -22,6 +22,7 @@ const pacman_hitbox = undefined;
 const monsters = [];    
 const dots = list(); //use list is more convenient , because it have more funcions         
 let score = 0;
+let totalScore = 0;
 let score_text = undefined;
 
 
@@ -47,6 +48,10 @@ function update_player_movement() {
 // ===  Freya: Maze and Dots ===
 
 function setup_maze_and_dots() {
+    // By JIAO : I need a variable named 'totalScore' , which equals to the num of dots
+    // and has been predeclared
+    // plz help me accomplish it in your function !
+     
     // Create outer boundary walls using create_rectangle
     // Optional: create inner maze blocks
     // Create dots using create_circle, store in dots[]
@@ -93,10 +98,8 @@ function check_dot_collisions() {
         update_score_display();
         }
     },dots);
-    //   if gameobjects_overlap(pacman_hitbox, dot):
-    //       hide or move dot
-    //       increment score
-    //       update_score_display()
+    
+    //if we use list to store all the dots
 }
 
 
@@ -107,11 +110,24 @@ function check_dot_collisions() {
 
 
 function game_loop(game_state) {
+    let isWin = ( score === totalScore)
+               ? true 
+               : false ;
+    
+    
+    if (iswin)
+    {
+        
+    }
+    
+    else
+    {
     update_player_movement();    // Aryaman
     update_monsters();           // Jiayan
+    
     check_dot_collisions();      // JIAO
     update_score_display();
-    
+    }
 
     // Optional: win or lose condition check?
 }
