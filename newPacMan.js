@@ -11,7 +11,7 @@
 //import part
 import {
     set_dimensions,set_fps,enable_debug,debug_log,
-    update_position,create_text,update_text,
+    update_position,create_text,update_text,gameobjects_overlap,update_scale,
     update_loop,build_game
 } from 'arcade_2d';
 
@@ -20,7 +20,7 @@ import {
 const pacman = undefined;
 const pacman_hitbox = undefined;
 const monsters = [];    
-const dots = [];         
+const dots = list(); //use list is more convenient , because it have more funcions         
 let score = 0;
 let score_text = undefined;
 
@@ -81,12 +81,18 @@ function setup_score_display() {
 }
 
 function update_score_display() {
-    update_text(score_text, score);
-    debug_log("upsd is called");
+    update_text(score_text, "Your Score is : " + stringify(score));
+    //debug_log("upsd is called");
 }
 
 function check_dot_collisions() {
-    // For each dot in dots:
+    for_each(dot => {
+    if (gameobjects_overlap(pacman_hitbox, dot)) {
+        update_scale(dot, [0, 0]);  // resize to 0 , save some expense
+        score = score + 1;
+        update_score_display();
+        }
+    },dots);
     //   if gameobjects_overlap(pacman_hitbox, dot):
     //       hide or move dot
     //       increment score
