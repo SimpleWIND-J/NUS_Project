@@ -7,7 +7,8 @@
 //import part
 import {
     set_dimensions,set_fps,enable_debug,
-    update_loop,build_game,
+    update_position,create_text,
+    update_loop,build_game
 } from 'arcade_2d';
 
 
@@ -18,25 +19,6 @@ const monsters = [];
 const dots = [];         
 let score = 0;
 let score_text = undefined;
-
-
-// === 🟩 Game Entry Point ===
-function init_game() {
-    set_dimensions(800, 600);     // Game canvas size
-    set_fps(30);                  // 30 frames per second
-    enable_debug(true);           // Show debug hitboxes
-
-    setup_player();               // Aryaman
-    setup_maze_and_dots();        // Freya
-    setup_monsters();             // Jiayan
-    setup_score_display();        // JIAO
-
-    update_loop(game_loop);       
-    build_game();                 
-}
-init_game();
-
-
 
 
 
@@ -91,8 +73,10 @@ function update_monsters() {
 // === JIAO: Dot Collection and Score ===
 
 function setup_score_display() {
-    // Create score_text using create_text
-    // Set position and content to "Score: 0"
+
+// 应该改为：
+    score_text = update_position(create_text("Your Score:"), [700, 50]);
+
 }
 
 function update_score_display() {
@@ -110,7 +94,9 @@ function check_dot_collisions() {
 
 
 
+
 // ===  Main Game Loop ===
+
 
 function game_loop(game_state) {
     update_player_movement();    // Aryaman
@@ -119,3 +105,28 @@ function game_loop(game_state) {
 
     // Optional: win condition check
 }
+
+
+
+// === 🟩 Game Entry Point ===
+
+//IMPORTANT:CANNOT USE A  FUNCTION TO WRAP THE FUNCTION "BUILD_GAME"!!
+
+//function init_game() {
+    set_dimensions([800, 800]);   // Game canvas size
+    set_fps(30);                  // 30 frames per second
+    enable_debug();               // Show debug hitboxes
+
+    setup_player();               // Aryaman
+    setup_maze_and_dots();        // Freya
+    setup_monsters();             // Jiayan
+    setup_score_display();        // JIAO
+
+    update_loop(game_loop);       
+    build_game();                 
+//}
+
+//init_game();
+
+
+
