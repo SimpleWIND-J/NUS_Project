@@ -6,8 +6,8 @@
 
 //import part
 import {
-    set_dimensions,set_fps,enable_debug,
-    update_position,create_text,
+    set_dimensions,set_fps,enable_debug,debug_log,
+    update_position,create_text,update_text,
     update_loop,build_game
 } from 'arcade_2d';
 
@@ -73,14 +73,12 @@ function update_monsters() {
 // === JIAO: Dot Collection and Score ===
 
 function setup_score_display() {
-
-// 应该改为：
-    score_text = update_position(create_text("Your Score:"), [700, 50]);
-
+    score_text = update_position(create_text("Your Score is:"), [700, 50]);
 }
 
 function update_score_display() {
-    // update_text(score_text, "Score: " + score);
+    update_text(score_text, score);
+    debug_log("upsd is called");
 }
 
 function check_dot_collisions() {
@@ -102,15 +100,17 @@ function game_loop(game_state) {
     update_player_movement();    // Aryaman
     update_monsters();           // Jiayan
     check_dot_collisions();      // JIAO
+    update_score_display();
+    
 
-    // Optional: win condition check
+    // Optional: win condition check?
 }
 
 
 
 // === 🟩 Game Entry Point ===
 
-//IMPORTANT:CANNOT USE A  FUNCTION TO WRAP THE FUNCTION "BUILD_GAME"!!
+//ATTENTION:CANNOT USE A  FUNCTION TO WRAP THE FUNCTION "BUILD_GAME"!!
 
 //function init_game() {
     set_dimensions([800, 800]);   // Game canvas size
