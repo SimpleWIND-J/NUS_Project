@@ -5,6 +5,9 @@
 
 
 //import part
+import {
+    set_dimensions,set_fps,
+} from 'arcade_2d';
 
 
 // === Global GameObjects and State ===
@@ -95,9 +98,9 @@ function check_dot_collisions() {
 // ===  Main Game Loop ===
 
 function game_loop(game_state) {
-    update_player_movement();    // 🟡 Aryaman
-    update_monsters();           // 🔴 Jiayan
-    check_dot_collisions();      // 🟢 JIAO
+    update_player_movement();    // Aryaman
+    update_monsters();           // Jiayan
+    check_dot_collisions();      // JIAO
 
     // Optional: win condition check
 }
