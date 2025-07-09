@@ -52,10 +52,18 @@ function setup_maze_and_dots() {
     // and has been predeclared
     // plz help me accomplish it in your function !
      
+     
     // Create outer boundary walls using create_rectangle
-    // Optional: create inner maze blocks
+    
     // Create dots using create_circle, store in dots[]
     // Set fixed positions for dots
+    function create_dot_at(pos) 
+    {
+        const dot = create_circle(3);
+        update_position(dot, pos);
+        append(dots, pair(dot, false)); // By JIAO : I need the "false" to judge whether the dot is ate
+                                        // plz use this function or other function that generates "pair(dot,false)"
+    }
 }
 
 
@@ -91,15 +99,14 @@ function update_score_display() {
 }
 
 function check_dot_collisions() {
-    for_each(dot => {
-    if (gameobjects_overlap(pacman_hitbox, dot)) {
-        update_scale(dot, [0, 0]);  // resize to 0 , save some expense
+    for (let i = 0; i < array_length(dots); i = i + 1) {
+    if (!dot_eaten[i] && gameobjects_overlap(pacman_hitbox, dots[i])) {
+        dot_eaten[i] = true;
+        update_scale(dots[i], [0, 0]);
         score = score + 1;
         update_score_display();
         }
-    },dots);
-    
-    //if we use list to store all the dots
+    }
 }
 
 
