@@ -12,11 +12,13 @@ import {
     create_circle,
     pointer_over_gameobject,
     update_position, create_text, update_text, gameobjects_overlap, update_scale,
-    update_loop, build_game
+    update_loop, build_game, create_sprite, set_scale, update_color
 } from 'arcade_2d';
 //ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
 
-
+import {
+    set_position
+} from 'game';
 
 
 /* TODO: START-UP INTERFACE
@@ -32,6 +34,7 @@ import {
 const pacman = undefined;
 const pacman_hitbox = undefined;
 const monsters = [];
+const walls = [];
 const dots = list(); //use list is more convenient , because it have more funcions         
 let score = 0;
 let totalScore = 0;
@@ -108,16 +111,112 @@ function setup_maze_and_dots() {
 
 // === Jiayan: Monster Setup and Behavior ===
 
-function setup_monsters() {
-    // Create monster sprites or circles
-    // Assign initial direction { dx, dy }
-    // Store each monster and direction in monsters[]
+const goup= 0;
+const godown= 1;
+const goleft= 2;
+const goright= 3;
+
+function push(array, element) {
+  const newLength = array['length'] + 1;
+  array[array['length']] = element;
+  return newLength;
 }
 
-function update_monsters() {
-    // Move each monster by its direction
-    // If collision with wall, pick new random direction
+function get_array_element(array, index) {
+  return array[index];
 }
+
+function array_some(array, callback) {
+  const length = array_length(array);
+  let i = 0;
+  
+  while (i < length) {
+    if (callback(get_array_element(array, i), i, array)) {
+      return true;
+    }
+    i = i + 1; 
+  }
+  
+  return false;
+}
+
+function update_new_position(dir,x,y){
+    let newx=x;
+    let newy=y;
+    
+    const directions=[goup,godown,goleft,goright];
+    let i=0;
+    while (i<4){
+        const currentdir=directions[i];
+        if(dir === currentdir){
+            if(currentdir===goup){
+                newy=newy-1;
+                }
+            else if (currentdir === godown){
+                newy=newy+1;
+            }
+            else if (currentdir === goleft){
+                newx=newx-1;
+            }
+            else if (currentdir === goright){
+            newx=newx+1;
+            }
+            break;
+      }
+      i=i+1;
+    }
+    return [newx,newy];
+}
+
+function setup_monsters(x, y, color) {
+  const sprite = create_sprite();//not very sure about how to put my image
+  set_scale(sprite, 1, 1);    
+  update_color(sprite, color);
+  
+  const screenX = x * 30;//assume one grid is 30px
+  const screenY = y * 30;
+  set_position(sprite, screenX, screenY);
+  
+  const direction = math_floor(math_random() * 4);
+  
+  push(monsters, [sprite, x, y, direction]);
+
+  return [sprite, x, y, direction];
+}
+
+
+function randomMoveMonster(monsters, walls) {
+  const sprite = get_array_element(monsters, 0);
+  let x = get_array_element(monsters, 1);
+  let y = get_array_element(monsters, 2);
+  let dir = get_array_element(monsters, 3);
+
+  const newposition= update_new_position(dir,x,y);
+  const newx= get_array_element(newposition,0);
+  const newy= get_array_element(newposition,1);
+  
+  
+  const isWall = array_some(walls, wall => 
+    get_array_element(wall, 0) === newx && 
+    get_array_element(wall, 1) === newy
+  );
+  const isOutOfBounds = newx < 0 || newx >= map_width || newy < 0 || newy >= map_height;
+
+  if (isWall || isOutOfBounds) {
+    dir = math_floor(math_random() * 4);
+    monsters[3]=dir; 
+  } else {
+    x=newx;
+    y=newy;
+    monsters[1]=x;
+    monsters[2]=y;
+    set_position(sprite, x * 30, y * 30);
+  }
+}
+
+setup_monsters(1,1,'red');
+setup_monsters(3,3,'yellow');
+setup_monsters(5,5,'blue');
 
 //From Jiao : I'll write the function to judge whether the pac man is ate by monsters
 
