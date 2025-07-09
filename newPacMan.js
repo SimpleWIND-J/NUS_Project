@@ -4,13 +4,6 @@
 // ======================================
 
 
-//ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
-
-
-/* TODO: START-UP INTERFACE
-         WIN & LOSE INTERFACE
-         MENU
-*/
 
 //import part
 import {
@@ -18,6 +11,26 @@ import {
     update_position,create_text,update_text,gameobjects_overlap,update_scale,
     update_loop,build_game
 } from 'arcade_2d';
+//ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
+
+
+
+
+/* TODO: START-UP INTERFACE
+         WIN & LOSE INTERFACE
+         MENU
+*/
+
+
+function startupInterface
+{
+    
+}
+
+function gameMenu
+{
+    
+}
 
 
 // === Global GameObjects and State ===
@@ -54,7 +67,7 @@ function update_player_movement() {
 function setup_maze_and_dots() {
     // From JIAO : I need a variable named 'totalScore' , which equals to the num of dots
     // and has been predeclared
-    // plz help me accomplish it in your function !
+    // plz help me accomplish it in your function
      
      
     // Create outer boundary walls using create_rectangle
@@ -103,7 +116,7 @@ function setup_score_display() {
 function update_score_display() {
     update_text(score_text, "Your Score is : " + stringify(score));
     //debug_log("upsd is called");
-}
+}// this can be included in game_menu
 
 function check_dot_collisions() {
     for (let i = 0; i < array_length(dots); i = i + 1) {
