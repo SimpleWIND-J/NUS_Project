@@ -140,15 +140,6 @@ function restart_game(){
 }
 
 
-    
-    update_position(title, [1000, 1000]);
-    update_position(start_button, [1000, 1000]);
-    update_position(monsters[0][0], [350, 350]); //TODO
-    update_map();
-}
-
-
-
 function gameMenu() {
 
 }
