@@ -10,6 +10,7 @@ import {
     set_dimensions, set_fps, enable_debug, debug_log,
     query_pointer_position, input_left_mouse_down,
     create_circle,
+    pointer_over_gameobject,
     update_position, create_text, update_text, gameobjects_overlap, update_scale,
     update_loop, build_game
 } from 'arcade_2d';
@@ -35,7 +36,8 @@ const dots = list(); //use list is more convenient , because it have more funcio
 let score = 0;
 let totalScore = 0;
 let score_text = undefined;
-let startup = false;
+let startup = true ;
+let start_button = undefined;
 
 
 
@@ -54,7 +56,9 @@ function gameMenu() {
 
 }
 
-function showWin
+function show_win_screen(){
+    
+}
 
 
 
@@ -159,7 +163,7 @@ function game_loop(game_state) {
     if (startup) {
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
             // these two functions must be called in gameloop
-            destroy_obj(start_button);  // release
+            // destroy_obj(start_button);  // release
             startup = false;
         }
 
@@ -168,7 +172,7 @@ function game_loop(game_state) {
     else {
         if (score === totalScore) {
             show_win_screen();
-            return;
+            
         }
 
         update_player_movement();
