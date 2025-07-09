@@ -7,9 +7,11 @@
 
 //import part
 import {
-    set_dimensions,set_fps,enable_debug,debug_log,
-    update_position,create_text,update_text,gameobjects_overlap,update_scale,
-    update_loop,build_game
+    set_dimensions, set_fps, enable_debug, debug_log,
+    query_pointer_position, input_left_mouse_down,
+    create_circle,
+    update_position, create_text, update_text, gameobjects_overlap, update_scale,
+    update_loop, build_game
 } from 'arcade_2d';
 //ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
 
@@ -28,13 +30,12 @@ import {
 // === Global GameObjects and State ===
 const pacman = undefined;
 const pacman_hitbox = undefined;
-const monsters = [];    
+const monsters = [];
 const dots = list(); //use list is more convenient , because it have more funcions         
 let score = 0;
 let totalScore = 0;
 let score_text = undefined;
-let startup = false ;
-
+let startup = false;
 
 
 
@@ -42,24 +43,18 @@ function setup_startup_screen() {
     const title = create_text("PACMAN");
     update_position(title, [300, 200]);
 
-    const start_text = create_text("Start");
-    update_position(start_text, [280, 300]);
-
-    const position = query_pointer_position();
-    if( (position[0]>250&&position[0]<310) 
-        && (position[1])
-        && (input_left_mouse_down()))
-    {
-        
-    }
-}
-
-function gameMenu()
-{
-    
+    start_button = create_text("Start Game");
+    update_position(start_button, [300, 250]);
+    update_scale(start_button, [2, 2]); // 放大一点
 }
 
 
+
+function gameMenu() {
+
+}
+
+function showWin
 
 
 
@@ -89,18 +84,17 @@ function setup_maze_and_dots() {
     // From JIAO : I need a variable named 'totalScore' , which equals to the num of dots
     // and has been predeclared
     // plz help me accomplish it in your function
-     
-     
+
+
     // Create outer boundary walls using create_rectangle
-    
+
     // Create dots using create_circle, store in dots[]
     // Set fixed positions for dots
-    function create_dot_at(pos) 
-    {
+    function create_dot_at(pos) {
         const dot = create_circle(3);
         update_position(dot, pos);
         append(dots, pair(dot, false)); // From JIAO : I need the "false" to judge whether the dot is ate
-                                        // plz use this function or other function that generates "pair(dot,false)"
+        // plz use this function or other function that generates "pair(dot,false)"
     }
 }
 
@@ -131,7 +125,7 @@ function update_monsters() {
 // === JIAO: Dot Collection and Score ===
 
 function setup_score_display() {
-    score_text = update_position(create_text("Your Score is:"), [700, 50]);
+    score_text = update_position(create_text("Your Score is: 0"), [700, 50]);
 }
 
 function update_score_display() {
@@ -141,14 +135,19 @@ function update_score_display() {
 
 function check_dot_collisions() {
     for (let i = 0; i < array_length(dots); i = i + 1) {
-    if (!dot_eaten[i] && gameobjects_overlap(pacman_hitbox, dots[i])) {
-        dot_eaten[i] = true;
-        update_scale(dots[i], [0, 0]);
-        score = score + 1;
-        update_score_display();
+        const dot_pair = dots[i];
+        const dot_obj = head(dot_pair);
+        const eaten_flag = tail(dot_pair);
+
+        if (!eaten_flag && gameobjects_overlap(pacman_hitbox, dot_obj)) {
+            dots[i] = pair(dot_obj, true);  // renew the pair
+            update_scale(dot_obj, [0, 0]);
+            score = score + 1;
+            update_score_display();
         }
     }
 }
+
 
 
 
@@ -156,38 +155,29 @@ function check_dot_collisions() {
 
 // ===  Main Game Loop ===
 
-
 function game_loop(game_state) {
-    
-    if (!startup)
-    {
-        setup_startup_screen();
-    }
-    
-    else //the game get started
-    {   let isWin = ( score === totalScore)
-               ? true 
-               : false ;
-    
-    
-        if (iswin)
-        {
-        // win function
+    if (startup) {
+        if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
+            // these two functions must be called in gameloop
+            destroy_obj(start_button);  // release
+            startup = false;
         }
-    
-        else
-        {
-        update_player_movement();    // Aryaman
-        update_monsters();           // Jiayan
-    
-        check_dot_collisions();      // JIAO
-        update_score_display();
-        }
-    }
-    
 
-    // Optional: win or lose condition check?
+    }
+
+    else {
+        if (score === totalScore) {
+            show_win_screen();
+            return;
+        }
+
+        update_player_movement();
+        update_monsters();
+        check_dot_collisions();
+    }
 }
+
+
 
 
 
@@ -197,19 +187,20 @@ function game_loop(game_state) {
 //OTHERWISE THERE WILL BE NO OUTPUT AT ALL
 
 //function init_game() {
-    set_dimensions([800, 800]);   // Game canvas size
-    set_fps(30);                  // 30 frames per second
-    enable_debug();               // Show debug hitboxes
+set_dimensions([800, 800]);   // Game canvas size
+set_fps(30);                  // 30 frames per second
+enable_debug();               // Show debug hitboxes
 
-    setup_player();               // Aryaman
-    setup_maze_and_dots();        // Freya
-    setup_monsters();             // Jiayan
-    setup_score_display();        // JIAO
-    
-    startupInterface();
+setup_startup_screen();
+setup_player();               // Aryaman
+setup_maze_and_dots();        // Freya
+setup_monsters();             // Jiayan
+setup_score_display();        // JIAO
 
-    update_loop(game_loop);       
-    build_game();                 
+
+
+update_loop(game_loop);
+build_game();
 //}
 
 //init_game();
