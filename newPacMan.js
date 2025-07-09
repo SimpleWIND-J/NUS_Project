@@ -26,7 +26,8 @@ import {
          MENU
 */
 
-
+set_dimensions([600, 500]);   // Game canvas size
+set_fps(30); 
 
 
 
@@ -36,6 +37,7 @@ const pacman_hitbox = undefined;
 const monsters = [];
 const walls = [];
 const dots = [];
+const TILE_SIZE = 35;
 let score = 0;
 let totalScore = 0;
 
@@ -48,129 +50,14 @@ let start_button = undefined;
 let map_width = 800;
 let map_height = 800;
 
+let power_mode = false;
+let power_timer = 0;
 
-function setup_startup_screen() {
-    title = create_text("PACMAN");
-    update_position(title, [400, 250]);
-    update_scale(title, [4, 4]);
-
-    start_button = create_text("Start Game");
-    update_position(start_button, [400, 450]);
-    update_scale(start_button, [2, 2]);
-}
-
-function game_screen() {
-    update_position(title, [1000, 1000]);
-    update_position(start_button, [1000, 1000]);
-    update_position(monsters[0][0], [400, 400]);
-}
+let win_text = undefined;
+let lose_text = undefined;
 
 
-
-function gameMenu() {
-
-}
-
-function show_win_screen() {
-
-}
-
-
-
-
-
-// ===  Aryaman: Player Control ===
-
-function setup_player() {
-    // Create pacman sprite or circle
-    // Create invisible hitbox circle
-    // Set initial position of both
-    // No object creation inside game_loop
-}
-
-function update_player_movement() {
-    // if input_key_down("LEFT"), move pacman left
-    // Sync hitbox position with pacman
-}
-
-
-
-
-
-// ===  Freya: Maze and Dots ===
-
-function setup_maze_and_dots() {
-    // From JIAO : I need a variable named 'totalScore' , which equals to the num of dots
-    // and has been predeclared
-    // plz help me accomplish it in your function
-    const tile_map = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
-        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    ];
-
-
-    const TILE_SIZE = 40;
-
-
-    const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
-    const dot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
-
-
-    function render_map() {
-        for (let row = 0; row < array_length(tile_map); row = row + 1) {
-            const current_row = tile_map[row];
-            for (let col = 0; col < array_length(current_row); col = col + 1) {
-                const tile = current_row[col];
-                const pos = [(col+1) * TILE_SIZE, (row+1) * TILE_SIZE];
-
-                if (tile === 1) {
-                    update_position(update_scale(create_sprite(wall_image_link),[1.2,1.2]), pos);
-                }
-                else if (tile === 0) {
-                    update_position(update_scale(create_sprite(dot_image_link),[1.2,1.2]), pos);
-
-                }
-            }
-        }
-    }
-    
-    render_map();
-    
-    // Create outer boundary walls using create_rectangle
-
-    // Create dots using create_circle, store in dots[]
-    // Set fixed positions for dots
-    function create_dot_at(pos) {
-        const dot = create_circle(3);
-        update_position(dot, pos);
-        append(dots, pair(dot, false)); // From JIAO : I need the "false" to judge whether the dot is ate
-        // plz use this function or other function that generates "pair(dot,false)"
-    }
-}
-
-
-
-
-
-// === Jiayan: Monster Setup and Behavior ===
-
-const goup = 0;
-const godown = 1;
-const goleft = 2;
-const goright = 3;
-
-
+//helper function
 function push(array, element) {
     //const newLength = array['length'] + 1;
     //array[array['length']] = element;
@@ -199,6 +86,173 @@ function array_some(array, callback) {
 
     return false;
 }
+
+
+
+
+//GAME FUNCTIOM
+
+
+function setup_startup_screen() {
+    title = create_text("PACMAN");
+    update_position(title, [400, 250]);
+    update_scale(title, [4, 4]);
+
+    start_button = create_text("Start Game");
+    update_position(start_button, [400, 450]);
+    update_scale(start_button, [2, 2]);
+}
+
+//from freya
+function restart_game(){
+    score = 0;
+    power_mode = false;
+    power_timer = 0;
+    update_position(title,[1000,1000]);
+    update_position(start_button,[800,800]);
+    update_position(win_text,[1000,1000]);
+    update_position(lose_text,[1000,1000]);
+}
+
+function game_screen() {
+    update_position(title, [1000, 1000]);
+    update_position(start_button, [1000, 1000]);
+    update_position(monsters[0][0], [400, 400]);
+}
+
+
+
+function gameMenu() {
+
+}
+
+
+function show_win_screen() {
+    win_text = create_text("YOU WIN!");
+    update_position(win_text,[300,400]);
+    update_scale(win_text,[4,4]);
+    startup = true;
+
+}
+
+
+function show_lose_screen(){
+     lose_text = create_text("YOU LOSE!");
+    update_position(lose_text,[300,400]);
+    update_scale(lose_text,[4,4]);
+}
+
+
+
+// ===  Aryaman: Player Control ===
+
+function setup_player() {
+    // Create pacman sprite or circle
+    // Create invisible hitbox circle
+    // Set initial position of both
+    // No object creation inside game_loop
+}
+
+function update_player_movement() {
+    // if input_key_down("LEFT"), move pacman left
+    // Sync hitbox position with pacman
+}
+
+
+
+
+
+// ===  Freya: Maze and Dots ===
+
+// 1 -> wall , 0 ->coin ,
+function setup_maze_and_dots() {
+    const tile_map = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ];
+
+
+
+
+
+    const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
+    const yellowdot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
+    const whitedot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/whiteball.png';
+
+    function render_map() {
+        for (let row = 0; row < array_length(tile_map); row = row + 1) {
+            const current_row = tile_map[row];
+            for (let col = 0; col < array_length(current_row); col = col + 1) {
+                const tile = current_row[col];
+                const pos = [(col+1) * TILE_SIZE, (row+1) * TILE_SIZE];
+                if (tile === 1) {
+                    push(walls,update_position(create_sprite(wall_image_link),pos));
+                }
+                else{
+                    push(dots,update_position(create_sprite(yellowdot_image_link),pos));
+                    totalScore = totalScore + 1 ;
+                }
+            }
+        }
+        
+        /*
+        for (let row = 0; row < array_length(tile_map); row = row + 1) {
+            const current_row = tile_map[row];
+            for (let col = 0; col < array_length(current_row); col = col + 1) {
+                const tile = current_row[col];
+                const pos = [(col+1) * TILE_SIZE, (row+1) * TILE_SIZE];
+
+                if (tile === 1) {
+                    update_position(update_scale(create_sprite(wall_image_link),[1.2,1.2]), pos);
+                }
+                else {
+                    const is_white = row + col ===2;
+                    const dot = create_sprite(is_white ?whitedot_image_link :yellowdot_image_link);
+                    update_position(update_scale(dot,[1.2,1.2]), pos);
+                   
+                    totalScore = totalScore +1;
+
+                }
+            }
+        }
+        */    //From JIAO : I will accomplish these in another function
+    }
+    
+    render_map();
+    
+    // Create outer boundary walls using create_rectangle
+
+    // Create dots using create_circle, store in dots[]
+    // Set fixed positions for dots
+    function create_dot_at(pos) {
+        const dot = create_circle(3);
+        update_position(dot, pos);
+        append(dots, pair(dot, false)); // From JIAO : I need the "false" to judge whether the dot is ate
+        // plz use this function or other function that generates "pair(dot,false)"
+    }
+}
+
+
+
+
+
+// === Jiayan: Monster Setup and Behavior ===
+
+const goup = 0;
+const godown = 1;
+const goleft = 2;
+const goright = 3;
 
 
 
@@ -240,13 +294,13 @@ function setup_monsters() {
     function build_monsters(x, y, color) {
 
         const imageLink = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/monster.png';
-        const new_monster = create_sprite(imageLink);
+        const sprite = create_sprite(imageLink);
         //from JIAO: Plz Replace it by your image link , this is used for testing
         //           Also , I think it wise to change another name for the object than "sprite"
 
 
         //set_scale(sprite, 1, 1); 
-        update_scale(new_monster, [1, 1]);
+        update_scale(sprite, [1, 1]);
 
         //update_color(sprite, color);
         //it will change the whole image's color , you can discomment this sentence to check it
@@ -263,13 +317,13 @@ function setup_monsters() {
         //By JIAO : In source language , the obj cannot be released, so we need to place it out of
         //          the screen and get it back when we need it 
 
-        update_position(new_monster, [1000, 1000]);
+        update_position(sprite, [385, 420]);
 
         const direction = math_floor(math_random() * 4);
 
-        push(monsters, [new_monster, x, y, direction]);
+        push(monsters, [sprite, x, y, direction]);
 
-        return [new_monster, x, y, direction];
+        return [sprite, x, y, direction];
     }
 
     //Color should be in RGBA format like this
@@ -286,7 +340,7 @@ function setup_monsters() {
 // From JIAO : it can only move once
 function update_monsters() {
     function randomMoveMonster(monsters, walls) {
-        const new_monster = get_array_element(monsters[0], 0);
+        const sprite = get_array_element(monsters[0], 0);
         let x = get_array_element(monsters[0], 1);
         let y = get_array_element(monsters[0], 2);
         let dir = get_array_element(monsters[0], 3);
@@ -314,7 +368,7 @@ function update_monsters() {
             monsters[1] = x;
             monsters[2] = y;
             //set_position(sprite, x * 30, y * 30);
-            update_position(new_monster, [x * 30, y * 30]);
+            update_position(sprite, [x * 30, y * 30]);
             debug_log("position is updated");
         }
     }
@@ -352,11 +406,23 @@ function check_dot_collisions() {
             dots[i] = pair(dot_obj, true);  // renew the pair
             update_scale(dot_obj, [0, 0]);
             score = score + 1;
+            
         }
     }
 }
 
 function check_monster_collision() {
+    let i = 0;
+    while (i<array_length(monsters)){
+        const m = monsters[i];
+        if (gameobjects_overlap(m, pacman_hitbox)){
+            if (!power_mode){
+                show_lose_screen();
+                startup = true;
+            }
+        }
+        i = i + 1;
+    }
 
 }
 
@@ -408,9 +474,8 @@ function game_loop(game_state) {
 //OTHERWISE THERE WILL BE NO OUTPUT AT ALL
 
 //function init_game() {
-set_dimensions([800, 800]);   // Game canvas size
-set_fps(30);                  // 30 frames per second
-enable_debug();               // Show debug hitboxes
+                 // 30 frames per second
+//enable_debug();               // Show debug hitboxes
 
 setup_startup_screen();
 setup_player();               // Aryaman
