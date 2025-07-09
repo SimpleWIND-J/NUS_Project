@@ -147,7 +147,6 @@ function check_dot_collisions() {
             dots[i] = pair(dot_obj, true);  // renew the pair
             update_scale(dot_obj, [0, 0]);
             score = score + 1;
-            update_score_display();
         }
     }
 }
@@ -170,6 +169,7 @@ function game_loop(game_state) {
     }
 
     else {
+        update_position();
         if (score === totalScore) {
             show_win_screen();
             
@@ -177,7 +177,8 @@ function game_loop(game_state) {
 
         update_player_movement();
         update_monsters();
-        check_dot_collisions();
+        //check_dot_collisions();
+        update_score_display();
     }
 }
 
