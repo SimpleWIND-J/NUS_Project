@@ -26,7 +26,7 @@ import {
          MENU
 */
 
-set_dimensions([600, 500]);   // Game canvas size
+set_dimensions([600, 550]);   // Game canvas size
 set_fps(30); 
 
 
@@ -95,13 +95,38 @@ function array_some(array, callback) {
 
 function setup_startup_screen() {
     title = create_text("PACMAN");
-    update_position(title, [400, 250]);
+    update_position(title, [300, 150]);
     update_scale(title, [4, 4]);
 
     start_button = create_text("Start Game");
-    update_position(start_button, [400, 450]);
+    update_position(start_button, [300, 350]);
     update_scale(start_button, [2, 2]);
 }
+
+function game_screen() {
+    function update_map() {
+        //resize the wall
+    for (let i = 0; i < array_length(walls); i = i + 1) {
+        update_scale(walls[i], [1.2, 1.2]);
+    }
+
+    //  resize the coin
+    for (let i = 0; i < array_length(dots); i = i + 1) {
+        update_scale(dots[i], [1.2, 1.2]);
+    }
+}
+    update_position(title, [1000, 1000]);
+    update_position(start_button, [1000, 1000]);
+    update_position(monsters[0][0], [350, 350]); //TODO
+    update_map();
+}
+
+
+
+function set_gameMenu() {
+
+}
+
 
 //from freya
 function restart_game(){
@@ -114,10 +139,12 @@ function restart_game(){
     update_position(lose_text,[1000,1000]);
 }
 
-function game_screen() {
+
+    
     update_position(title, [1000, 1000]);
     update_position(start_button, [1000, 1000]);
-    update_position(monsters[0][0], [400, 400]);
+    update_position(monsters[0][0], [350, 350]); //TODO
+    update_map();
 }
 
 
@@ -195,12 +222,12 @@ function setup_maze_and_dots() {
             const current_row = tile_map[row];
             for (let col = 0; col < array_length(current_row); col = col + 1) {
                 const tile = current_row[col];
-                const pos = [(col+1) * TILE_SIZE, (row+1) * TILE_SIZE];
+                const pos = [(col+1) * TILE_SIZE, (row+3) * TILE_SIZE];
                 if (tile === 1) {
-                    push(walls,update_position(create_sprite(wall_image_link),pos));
+                    push(walls,update_scale(update_position(create_sprite(wall_image_link),pos),[0,0]));
                 }
                 else{
-                    push(dots,update_position(create_sprite(yellowdot_image_link),pos));
+                    push(dots,update_scale(update_position(create_sprite(yellowdot_image_link),pos),[0,0]));
                     totalScore = totalScore + 1 ;
                 }
             }
@@ -317,7 +344,7 @@ function setup_monsters() {
         //By JIAO : In source language , the obj cannot be released, so we need to place it out of
         //          the screen and get it back when we need it 
 
-        update_position(sprite, [385, 420]);
+        update_position(sprite, [1000, 2000]);
 
         const direction = math_floor(math_random() * 4);
 
@@ -351,24 +378,28 @@ function update_monsters() {
         debug_log("newposition is created");
         debug_log(newx);
         debug_log(newy);
-
+        
+        debug_log("bugpos1");
         const isWall = array_some(walls, wall =>
             get_array_element(wall, 0) === newx &&
             get_array_element(wall, 1) === newy
         );
-
+        debug_log("bugpos2");
+        
         const isOutOfBounds = newx < 0 || newx >= map_width || newy < 0 || newy >= map_height;
-
+        
         if (isWall || isOutOfBounds) {
             dir = math_floor(math_random() * 4);
             monsters[3] = dir;
+            
         } else {
+            
             x = newx;
             y = newy;
             monsters[1] = x;
             monsters[2] = y;
             //set_position(sprite, x * 30, y * 30);
-            update_position(sprite, [x * 30, y * 30]);
+            update_position(sprite, [x * 35, y * 35]);
             debug_log("position is updated");
         }
     }
@@ -394,6 +425,9 @@ function update_score_display() {
     update_text(score_text, "Your Score is : " + stringify(score));
     //debug_log("upsd is called");
 }// this can be included in game_menu
+
+
+
 
 function check_dot_collisions() {
     //debug_log(array_length(dots)); 
@@ -449,13 +483,14 @@ function game_loop(game_state) {
 
     else {
         debug_log(startup);
-        update_position(score_text, [700, 50]);
+        update_position(score_text, [480, 40]);
         if (score === totalScore) {
             show_win_screen();
         }
 
         //update_player_movement();
         update_monsters();
+        
         debug_log("game_loop running");
         count = count + 1;
         // used to check if the loop is still running 
@@ -475,7 +510,7 @@ function game_loop(game_state) {
 
 //function init_game() {
                  // 30 frames per second
-//enable_debug();               // Show debug hitboxes
+enable_debug();               // Show debug hitboxes
 
 setup_startup_screen();
 setup_player();               // Aryaman
