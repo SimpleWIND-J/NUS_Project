@@ -7,6 +7,10 @@
 //ATTENTION: THE "DEBUG_LOG" FUNCTION CAN ONLY BE ACTIVITATED IN "GAME_LOOP"
 
 
+/* TODO: START-UP INTERFACE
+         WIN & LOSE INTERFACE
+         MENU
+*/
 
 //import part
 import {
@@ -48,7 +52,7 @@ function update_player_movement() {
 // ===  Freya: Maze and Dots ===
 
 function setup_maze_and_dots() {
-    // By JIAO : I need a variable named 'totalScore' , which equals to the num of dots
+    // From JIAO : I need a variable named 'totalScore' , which equals to the num of dots
     // and has been predeclared
     // plz help me accomplish it in your function !
      
@@ -61,7 +65,7 @@ function setup_maze_and_dots() {
     {
         const dot = create_circle(3);
         update_position(dot, pos);
-        append(dots, pair(dot, false)); // By JIAO : I need the "false" to judge whether the dot is ate
+        append(dots, pair(dot, false)); // From JIAO : I need the "false" to judge whether the dot is ate
                                         // plz use this function or other function that generates "pair(dot,false)"
     }
 }
@@ -82,6 +86,9 @@ function update_monsters() {
     // Move each monster by its direction
     // If collision with wall, pick new random direction
 }
+
+//From Jiao : I'll write the function to judge whether the pac man is ate by monsters
+
 
 
 
@@ -124,16 +131,16 @@ function game_loop(game_state) {
     
     if (iswin)
     {
-        
+        // win function
     }
     
     else
     {
-    update_player_movement();    // Aryaman
-    update_monsters();           // Jiayan
+        update_player_movement();    // Aryaman
+        update_monsters();           // Jiayan
     
-    check_dot_collisions();      // JIAO
-    update_score_display();
+        check_dot_collisions();      // JIAO
+        update_score_display();
     }
 
     // Optional: win or lose condition check?
