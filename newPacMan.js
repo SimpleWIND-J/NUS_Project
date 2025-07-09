@@ -228,7 +228,7 @@ setup_monsters(5,5,'blue');
 // === JIAO: Dot Collection and Score ===
 
 function setup_score_display() {
-    score_text = update_position(create_text("Your Score is: 0"), [700, 50]);
+    score_text = update_position(create_text("Your Score is: 0"), [1000.1000]);
 }
 
 function update_score_display() {
@@ -268,7 +268,7 @@ function game_loop(game_state) {
     }
 
     else {
-        update_position();
+        update_position(score_text,[700, 50]);
         if (score === totalScore) {
             show_win_screen();
             
