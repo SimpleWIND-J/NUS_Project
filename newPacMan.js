@@ -22,15 +22,7 @@ import {
 */
 
 
-function startupInterface
-{
-    
-}
 
-function gameMenu
-{
-    
-}
 
 
 // === Global GameObjects and State ===
@@ -41,6 +33,35 @@ const dots = list(); //use list is more convenient , because it have more funcio
 let score = 0;
 let totalScore = 0;
 let score_text = undefined;
+let startup = false ;
+
+
+
+
+function setup_startup_screen() {
+    const title = create_text("PACMAN");
+    update_position(title, [300, 200]);
+
+    const start_text = create_text("Start");
+    update_position(start_text, [280, 300]);
+
+    const position = query_pointer_position();
+    if( (position[0]>250&&position[0]<310) 
+        && (position[1])
+        && (input_left_mouse_down()))
+    {
+        
+    }
+}
+
+function gameMenu()
+{
+    
+}
+
+
+
+
 
 
 
@@ -137,24 +158,33 @@ function check_dot_collisions() {
 
 
 function game_loop(game_state) {
-    let isWin = ( score === totalScore)
+    
+    if (!startup)
+    {
+        setup_startup_screen();
+    }
+    
+    else //the game get started
+    {   let isWin = ( score === totalScore)
                ? true 
                : false ;
     
     
-    if (iswin)
-    {
+        if (iswin)
+        {
         // win function
-    }
+        }
     
-    else
-    {
+        else
+        {
         update_player_movement();    // Aryaman
         update_monsters();           // Jiayan
     
         check_dot_collisions();      // JIAO
         update_score_display();
+        }
     }
+    
 
     // Optional: win or lose condition check?
 }
@@ -175,6 +205,8 @@ function game_loop(game_state) {
     setup_maze_and_dots();        // Freya
     setup_monsters();             // Jiayan
     setup_score_display();        // JIAO
+    
+    startupInterface();
 
     update_loop(game_loop);       
     build_game();                 
