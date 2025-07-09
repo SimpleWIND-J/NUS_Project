@@ -240,7 +240,7 @@ function setup_monsters() {
     function build_monsters(x, y, color) {
 
         const imageLink = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/monster.png';
-        const sprite = create_sprite(imageLink);
+        const new_monster = create_sprite(imageLink);
         //from JIAO: Plz Replace it by your image link , this is used for testing
         //           Also , I think it wise to change another name for the object than "sprite"
 
@@ -267,7 +267,7 @@ function setup_monsters() {
 
         const direction = math_floor(math_random() * 4);
 
-        push(monsters, [sprite, x, y, direction]);
+        push(monsters, [new_monster, x, y, direction]);
 
         return [new_monster, x, y, direction];
     }
@@ -286,7 +286,7 @@ function setup_monsters() {
 // From JIAO : it can only move once
 function update_monsters() {
     function randomMoveMonster(monsters, walls) {
-        const sprite = get_array_element(monsters[0], 0);
+        const new_monster = get_array_element(monsters[0], 0);
         let x = get_array_element(monsters[0], 1);
         let y = get_array_element(monsters[0], 2);
         let dir = get_array_element(monsters[0], 3);
@@ -314,7 +314,7 @@ function update_monsters() {
             monsters[1] = x;
             monsters[2] = y;
             //set_position(sprite, x * 30, y * 30);
-            update_position(sprite, [x * 30, y * 30]);
+            update_position(new_monster, [x * 30, y * 30]);
             debug_log("position is updated");
         }
     }
