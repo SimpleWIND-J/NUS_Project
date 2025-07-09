@@ -246,7 +246,7 @@ function setup_monsters() {
 
 
         //set_scale(sprite, 1, 1); 
-        update_scale(sprite, [1, 1]);
+        update_scale(new_monster, [1, 1]);
 
         //update_color(sprite, color);
         //it will change the whole image's color , you can discomment this sentence to check it
@@ -263,13 +263,13 @@ function setup_monsters() {
         //By JIAO : In source language , the obj cannot be released, so we need to place it out of
         //          the screen and get it back when we need it 
 
-        update_position(sprite, [1000, 1000]);
+        update_position(new_monster, [1000, 1000]);
 
         const direction = math_floor(math_random() * 4);
 
         push(monsters, [sprite, x, y, direction]);
 
-        return [sprite, x, y, direction];
+        return [new_monster, x, y, direction];
     }
 
     //Color should be in RGBA format like this
