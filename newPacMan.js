@@ -35,7 +35,7 @@ const pacman = undefined;
 const pacman_hitbox = undefined;
 const monsters = [];
 const walls = [];
-const dots = [];        
+const dots = [];
 let score = 0;
 let totalScore = 0;
 
@@ -53,17 +53,16 @@ function setup_startup_screen() {
     title = create_text("PACMAN");
     update_position(title, [400, 250]);
     update_scale(title, [4, 4]);
-    
+
     start_button = create_text("Start Game");
     update_position(start_button, [400, 450]);
-    update_scale(start_button, [2, 2]); 
+    update_scale(start_button, [2, 2]);
 }
 
-function game_screen()
-{
-    update_position(title,[1000,1000]);
+function game_screen() {
+    update_position(title, [1000, 1000]);
     update_position(start_button, [1000, 1000]);
-    update_position(monsters[0][0],[400,400]);
+    update_position(monsters[0][0], [400, 400]);
 }
 
 
@@ -104,8 +103,50 @@ function setup_maze_and_dots() {
     // From JIAO : I need a variable named 'totalScore' , which equals to the num of dots
     // and has been predeclared
     // plz help me accomplish it in your function
+    const tile_map = [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1],
+        [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ];
 
 
+    const TILE_SIZE = 40;
+
+
+    const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
+    const dot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
+
+
+    function render_map() {
+        for (let row = 0; row < array_length(tile_map); row = row + 1) {
+            const current_row = tile_map[row];
+            for (let col = 0; col < array_length(current_row); col = col + 1) {
+                const tile = current_row[col];
+                const pos = [(col+1) * TILE_SIZE, (row+1) * TILE_SIZE];
+
+                if (tile === 1) {
+                    update_position(update_scale(create_sprite(wall_image_link),[1.2,1.2]), pos);
+                }
+                else if (tile === 0) {
+                    update_position(update_scale(create_sprite(dot_image_link),[1.2,1.2]), pos);
+
+                }
+            }
+        }
+    }
+    
+    render_map();
+    
     // Create outer boundary walls using create_rectangle
 
     // Create dots using create_circle, store in dots[]
@@ -205,24 +246,24 @@ function setup_monsters() {
 
 
         //set_scale(sprite, 1, 1); 
-        update_scale(sprite,[1,1]);
+        update_scale(sprite, [1, 1]);
 
         //update_color(sprite, color);
         //it will change the whole image's color , you can discomment this sentence to check it
+
+        /*
+                const screenX = x * 30;//assume one grid is 30px
+                const screenY = y * 30;
         
-/*
-        const screenX = x * 30;//assume one grid is 30px
-        const screenY = y * 30;
-
-        //set_position(sprite, screenX, screenY);
-        update_position(sprite, [screenX, screenY]); //we can use funciton in arcade 2d
-*/
+                //set_position(sprite, screenX, screenY);
+                update_position(sprite, [screenX, screenY]); //we can use funciton in arcade 2d
+        */
 
 
-//By JIAO : In source language , the obj cannot be released, so we need to place it out of
-//          the screen and get it back when we need it 
+        //By JIAO : In source language , the obj cannot be released, so we need to place it out of
+        //          the screen and get it back when we need it 
 
-        update_position(sprite,[1000,1000]);
+        update_position(sprite, [1000, 1000]);
 
         const direction = math_floor(math_random() * 4);
 
@@ -253,9 +294,9 @@ function update_monsters() {
         const newposition = update_new_position(dir, x, y);
         const newx = get_array_element(newposition, 0);
         const newy = get_array_element(newposition, 1);
-        debug_log ("newposition is created");
-        debug_log (newx);
-        debug_log (newy);
+        debug_log("newposition is created");
+        debug_log(newx);
+        debug_log(newy);
 
         const isWall = array_some(walls, wall =>
             get_array_element(wall, 0) === newx &&
@@ -277,8 +318,8 @@ function update_monsters() {
             debug_log("position is updated");
         }
     }
-    
-    
+
+
     randomMoveMonster(monsters, walls);
 }
 
@@ -326,10 +367,10 @@ let count = 0;
 // ===  Main Game Loop ===
 
 function game_loop(game_state) {
-    
-    
+
+
     debug_log(count);
-    
+
     if (startup) {
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
             // these two functions must be called in gameloop
@@ -340,7 +381,7 @@ function game_loop(game_state) {
 
     }
 
-    else{
+    else {
         debug_log(startup);
         update_position(score_text, [700, 50]);
         if (score === totalScore) {
@@ -350,7 +391,7 @@ function game_loop(game_state) {
         //update_player_movement();
         update_monsters();
         debug_log("game_loop running");
-        count = count+ 1;
+        count = count + 1;
         // used to check if the loop is still running 
         check_dot_collisions();
         update_score_display();
