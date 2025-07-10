@@ -356,7 +356,7 @@ function setup_monsters() {
 
 
 // From JIAO : it can only move once
-function update_monsters() {
+/*function update_monsters() {
     function randomMoveMonster(monsters, walls) {
         const sprite = get_array_element(monsters[0], 0);
         let x = get_array_element(monsters[0], 1);
@@ -397,6 +397,47 @@ function update_monsters() {
 
 
     randomMoveMonster(monsters, walls);
+}
+*/
+//another try
+function update_monsters() {
+   function randomMoveMonster(monsters, walls) {
+        for (let i = 0; i < array_length(monsters); i=i+1) {
+            const monster = monsters[i];
+            const sprite = get_array_element(monster, 0);
+            let x = get_array_element(monster, 1);
+            let y = get_array_element(monster, 2);
+            let dir = get_array_element(monster, 3);
+        
+       
+        const new_position = update_new_position(dir, x, y);
+        const newx = get_array_element(new_position, 0);
+        const newy = get_array_element(new_position, 1);
+        
+    
+
+        const isWall = array_some(walls, wall =>
+            get_array_element(wall, 0) === newx &&
+            get_array_element(wall, 1) === newy
+        );
+
+
+        const isOutOfBounds = newx < 0 || newx >= map_width || newy < 0 || newy >= map_height;
+        if (isWall || isOutOfBounds) {
+            dir = math_floor(math_random() * 4);
+            monsters[i][3] = dir;
+        } else {
+            x = newx;
+            y = newy;
+            monsters[i][1] = x;
+            monsters[i][2] = y;
+            //set_position(sprite, x * 30, y * 30);
+            update_position(sprite, [x * TILE_SIZE, y * TILE_SIZE]);
+            
+        }
+    }
+}
+randomMoveMonster(monsters,walls);
 }
 
 //From Jiao : I'll write the function to judge whether the pac man is ate by monsters
