@@ -565,8 +565,8 @@ function show_game_screen() {
 
 function show_start_menu()
 {
-    update_position(title, [300, 150]);
-    update_position(start_button, [300, 350]);
+    update_to_top(update_position(title, [300, 150]));
+    update_to_top(update_position(start_button, [300, 350]));
 }
 
 function hide_start_menu()
@@ -649,7 +649,7 @@ function game_loop(game_state) {
                 isLose = false;
                 hide_lose_screen();
                 
-            }
+                }
             }
             
             else
