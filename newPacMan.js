@@ -9,6 +9,7 @@ import {
     create_circle,
     pointer_over_gameobject,
     get_game_time, update_to_top,
+    update_flip,
     update_position, create_text, update_text, gameobjects_overlap, update_scale,
     update_loop, build_game, create_sprite, set_scale, update_color, query_position,
     input_key_down, update_rotation
@@ -192,7 +193,7 @@ function check_monster_collision() {
 function setup_canvas()
 {
     set_dimensions([600, 550]);
-    
+    set_fps(100);
 }
 
 function setup_startup_screen() {
@@ -336,18 +337,36 @@ function setup_maze_and_dots() {
 
 
 function setup_monsters() {
-    function build_monsters(x, y, color) {
-        const imageLink = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/monster.png';
+    const imageLinks = [
+        'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/monster.png',
+        'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/red_monster_resized.png',
+        'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/blue_monster_resized.png',
+        'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellow_monster_resized.png'
+        ];
+        
+    function build_monsters(x, y,monsterIndex) {
+        const imageLink = imageLinks[monsterIndex];
         const sprite = create_sprite(imageLink);
         update_scale(sprite, [1, 1]);
         update_position(sprite, [1000, 2000]);
         const direction = math_floor(math_random() * 4);
-        push(monsters, [sprite, x, y, direction]);
+        
+        //set the intial orientation of the image
+        if (direction === 2 )
+        {
+            update_flip(sprite,[true,false]);
+        }
+        
+        //push(monsters, [sprite, x, y, direction]);
         return [sprite, x, y, direction];
     }
-    push(monsters, build_monsters(10, 10, [255, 0, 0, 255]));
+    for(let monsterIndex = 0 ; monsterIndex<array_length(imageLinks);
+        monsterIndex=monsterIndex+1)
+        {
+            push(monsters, build_monsters(10, 10, monsterIndex));
+        }
+        //setup all the monsters
 }
-
 
 //----------------------------------------------------
 
@@ -495,7 +514,10 @@ function update_new_position(dir, x, y) {
 }
 
 function update_monsters() {
-    const monster_info = monsters[0];
+    
+    for(let i = 0 ; i < array_length(monsters); i = i + 1)
+    {
+    const monster_info = monsters[i];
     const sprite = get_array_element(monster_info, 0);
     let x = get_array_element(monster_info, 1);
     let y = get_array_element(monster_info, 2);
@@ -525,9 +547,9 @@ function update_monsters() {
             // Successfully moved
             x = newx;
             y = newy;
-            monsters[0][1] = x;
-            monsters[0][2] = y;
-            monsters[0][3] = dir;
+            monsters[i][1] = x;
+            monsters[i][2] = y;
+            monsters[i][3] = dir;
             update_position(sprite, [x * TILE_SIZE, y * TILE_SIZE]);
             moved = true;
         } else {
@@ -536,6 +558,7 @@ function update_monsters() {
             attempts = attempts + 1;
             debug_log(attempts);
         }
+    }
     }
 }
 
