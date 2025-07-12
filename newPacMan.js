@@ -18,6 +18,9 @@ import {
 
 
 // === Global GameObjects and State ========================
+const up_url = "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pacmanUp.png";
+const red_url = "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/red_pacman1.png";
+const url_arr = [up_url, red_url];
 let pacman = undefined;
 const monsters = [];
 // the element in monsters[] is in the format [obj,x,y,dir]
@@ -33,6 +36,16 @@ let score_text = undefined;
 let pause_text = undefined;
 let pause_button = undefined;
 let game_title = undefined;
+
+//skin menu
+let options = undefined;
+let skins = [];
+let skin_index = 0;
+let next = undefined;
+let prev = undefined;
+
+// Add s_text global variable
+let s_text = undefined;
 
 //pauseMenu
 let pause_title = undefined;
@@ -51,8 +64,8 @@ let power_timer = 0;
 //win
 let win_text = undefined;
 let lose_text = undefined;
-let isWin = false ;
-let isLose = false ;
+let isWin = false;
+let isLose = false;
 
 
 //restart
@@ -60,7 +73,7 @@ let restart_text = undefined;
 
 let tile_map = [];
 let isPaused = false;
-let current_direction = ""; 
+let current_direction = "";
 // Store the current movement direction for continuous movement
 
 //used to control monsters
@@ -96,23 +109,44 @@ function get_array_element(array, index) {
     return array[index];
 }
 
+function shuffle_array(arr) {
+    const n = array_length(arr);
 
-function add_vectors(to, from) 
-{
-        to[0] = to[0] + from[0];
-        to[1] = to[1] + from[1];
+    //Fisher-Yates 
+    for (let i = n - 1; i > 0; i = i - 1) {
+        const j = math_floor(math_random() * (i + 1));
+        // Swap arr[i] and arr[j]
+        const temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
     }
+}
+
+
+function distance(x1, y1, x2, y2) {
+    const dx = x1 - x2;
+    const dy = y1 - y2;
+    return dx * dx + dy * dy;
+}
+
+
+
+
+function add_vectors(to, from) {
+    to[0] = to[0] + from[0];
+    to[1] = to[1] + from[1];
+}
 
 
 function add_vectors_new(a, b) {
-        return [a[0] + b[0], a[1] + b[1]];
-    }
-    
-    
+    return [a[0] + b[0], a[1] + b[1]];
+}
+
+
 function predic_wall(x, y) {
-    const predCol = x; 
+    const predCol = x;
     const predRow = y;
-    if (tile_map[predRow-3][predCol-1] === 1) {
+    if (tile_map[predRow - 3][predCol - 1] === 1) {
         return true;
     } else {
         return false;
@@ -123,7 +157,7 @@ function reset_all_dots() {
     for (let i = 0; i < array_length(dots); i = i + 1) {
         const dot_obj = head(dots[i]);
         dots[i] = pair(dot_obj, false);
-        update_scale(dot_obj, [1, 1]); 
+        update_scale(dot_obj, [1, 1]);
     }
 }
 
@@ -146,11 +180,25 @@ function get_valid_directions(x, y, exclude_dir) {
 
 
 function opposite_direction(dir) {
-    if (dir === goup) {return godown;}
-    if (dir === godown) {return goup;}
-    if (dir === goleft) {return goright;}
-    if (dir === goright) {return goleft;}
+    if (dir === goup) { return godown; }
+    if (dir === godown) { return goup; }
+    if (dir === goleft) { return goright; }
+    if (dir === goright) { return goleft; }
 }
+
+function is_occupied(x, y, self_index) {
+    for (let i = 0; i < array_length(monsters); i = i + 1) {
+        if (i !== self_index) {
+            const other_x = get_array_element(monsters[i], 1);
+            const other_y = get_array_element(monsters[i], 2);
+            if (x === other_x && y === other_y) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 
 //---- check collision ---------
 function check_dot_collisions() {
@@ -173,13 +221,13 @@ function check_monster_collision() {
         const m = monsters[i][0];
         if (gameobjects_overlap(m, pacman)) {
             if (!power_mode) {
-                isLose = true ;
+                isLose = true;
             }
         }
         i = i + 1;
     }
 }
-    
+
 //============================================================
 
 
@@ -190,8 +238,7 @@ function check_monster_collision() {
 //========= SETUP FUNCTIONS  =================================
 
 //--------- UI FUNCTIONS     ------------------
-function setup_canvas()
-{
+function setup_canvas() {
     set_dimensions([600, 550]);
     set_fps(100);
 }
@@ -203,13 +250,16 @@ function setup_startup_screen() {
     start_button = create_text("Start Game");
     update_position(start_button, [300, 350]);
     update_scale(start_button, [2, 2]);
+    options = create_text("Player Skins");
+    update_position(options, [300, 400]);
+    update_scale(options, [2, 2]);
 }
 
 function setup_pause_menu() {
     pause_title = create_text("Game Paused");
-    update_position(pause_title, [1000, 3000]); 
+    update_position(pause_title, [1000, 3000]);
     update_scale(pause_title, [3, 3]);
-    
+
     resume_button = create_text("Resume");
     update_position(resume_button, [2000, 1000]);
     update_scale(resume_button, [2, 2]);
@@ -219,15 +269,15 @@ function setup_gameMenu() {
     score_text = create_text("Your Score is: 0");
     update_position(score_text, [1000, 1000]);
     update_scale(score_text, [1.1, 1.1]);
-    
+
     pause_text = create_text("Pause");
     update_position(pause_text, [1000, 1000]);
     update_scale(pause_text, [1, 1]);
-    
+
     pause_button = create_text("[ P ]");
     update_position(pause_button, [1000, 1000]);
     update_scale(pause_button, [1, 1]);
-    
+
     game_title = create_text("PACMAN");
     update_position(game_title, [1000, 1000]);
     update_scale(game_title, [1.5, 1.5]);
@@ -240,8 +290,7 @@ function setup_win_screen() {
     startup = true;
 }
 
-function setup_restart()
-{
+function setup_restart() {
     restart_text = create_text("TRY AGAIN!");
     update_position(restart_text, [3000, 4000]);
     update_scale(lose_text, [4, 4]);
@@ -259,21 +308,26 @@ function setup_lose_screen() {
 //--------- GAME OBJ ----------------------------
 
 function setup_player() {
-    // Create pacman sprite
-    const up_url = "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pacmanUp.png";
-    pacman = create_sprite(up_url);
-    update_scale(pacman, [35/46, 35/45]);
-    
-    // Position pacman at a default starting position (will be updated after map is created)
-    const start_pos = [2 * TILE_SIZE, 4 * TILE_SIZE]; // Position at [1,1] in map coordinates
-    update_position(pacman, start_pos);
+    // Create all pacman skin sprites, hide all except the default
+    for (let i = 0; i < array_length(url_arr); i = i + 1) {
+        skins[i] = create_sprite(url_arr[i]);
+        if (i === 1) {
+            update_scale(skins[i], [3.5 / 50, 3.5 / 50]);
+        } else {
+            update_scale(skins[i], [35 / 46, 35 / 45]);
+        }
+        update_position(skins[i], [5000, 5000]); // Hide initially
+    }
+    // Show the default skin
+    update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+    pacman = skins[skin_index];
 }
 
 
 
 // 1 -> wall , 0 ->coin ,
 function setup_maze_and_dots() {
-     tile_map = [
+    tile_map = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
@@ -298,7 +352,7 @@ function setup_maze_and_dots() {
             const current_row = tile_map[row];
             for (let col = 0; col < array_length(current_row); col = col + 1) {
                 const tile = current_row[col];
-                const pos = [(col+1) * TILE_SIZE, (row+3) * TILE_SIZE];
+                const pos = [(col + 1) * TILE_SIZE, (row + 3) * TILE_SIZE];
                 if (tile === 1) {
                     push(walls, update_scale(update_position(create_sprite(wall_image_link), pos), [0, 0]));
                 }
@@ -309,9 +363,9 @@ function setup_maze_and_dots() {
             }
         }
     }
-    
+
     render_map();
-    
+
     // Position player at a valid starting position after map is created
     let start_x = 1;
     let start_y = 1;
@@ -328,7 +382,7 @@ function setup_maze_and_dots() {
             break;
         }
     }
-    
+
     // Update pacman position to valid starting position
     const start_pos = [(start_x + 1) * TILE_SIZE, (start_y + 3) * TILE_SIZE];
     update_position(pacman, start_pos);
@@ -342,31 +396,52 @@ function setup_monsters() {
         'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/red_monster_resized.png',
         'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/blue_monster_resized.png',
         'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellow_monster_resized.png'
-        ];
-        
-    function build_monsters(x, y,monsterIndex) {
+    ];
+
+    function build_monsters(x, y, monsterIndex) {
         const imageLink = imageLinks[monsterIndex];
         const sprite = create_sprite(imageLink);
         update_scale(sprite, [1, 1]);
         update_position(sprite, [1000, 2000]);
         const direction = math_floor(math_random() * 4);
-        
+
+        let isLeft = false;
+
         //set the intial orientation of the image
-        if (direction === 2 )
-        {
-            update_flip(sprite,[true,false]);
+        if (direction === 2) {
+            update_flip(sprite, [true, false]);
+            isLeft = true;
         }
-        
+
         //push(monsters, [sprite, x, y, direction]);
-        return [sprite, x, y, direction];
+        return [sprite, x, y, direction, isLeft];
     }
-    for(let monsterIndex = 0 ; monsterIndex<array_length(imageLinks);
-        monsterIndex=monsterIndex+1)
-        {
-            push(monsters, build_monsters(10, 10, monsterIndex));
-        }
-        //setup all the monsters
+    for (let monsterIndex = 0; monsterIndex < array_length(imageLinks);
+        monsterIndex = monsterIndex + 1) {
+        push(monsters, build_monsters(10, 10, monsterIndex));
+    }
+    //setup all the monsters
 }
+
+function setup_skin_menu() {
+    options = create_text("Player Skins");
+    skins[0] = create_sprite(up_url);
+    update_position(skins[0], [2500, 2500]);
+    update_scale(skins[0], [2, 2]);
+    skins[1] = create_sprite(red_url);
+    update_position(skins[1], [3500, 2500]);
+    update_scale(skins[1], [3.5 / 50, 3.5 / 50]);
+    prev = create_text("<");
+    next = create_text(">");
+    update_position(prev, [2000, 2500]);
+    update_position(prev, [2500, 2500]);
+    update_position(options, [2000, 2000]);
+    // Create s_text for starting game from skin menu
+    s_text = create_text("Start Game");
+    update_position(s_text, [300, 350]);
+    update_scale(s_text, [2, 2]);
+}
+
 
 //----------------------------------------------------
 
@@ -381,38 +456,35 @@ function setup_monsters() {
 
 //============== SHOW AND HIDE FUNCTIONS ==================
 
-function show_win_screen()
-{
-    update_to_top(update_position(win_text,[300,200]));
+function show_win_screen() {
+    update_to_top(update_position(win_text, [300, 200]));
     show_restart();
 }
 
-function hide_win_screen(){
-    update_position(win_text,[2000,3000]);
+function hide_win_screen() {
+    update_position(win_text, [2000, 3000]);
     hide_restart_screen();
 }
 
 
 
-function show_lose_screen()
-{
-    update_to_top(update_position(lose_text,[300,200]));
+function show_lose_screen() {
+    update_to_top(update_position(lose_text, [300, 200]));
     show_restart();
 }
 
-function hide_lose_screen(){
-    update_position(lose_text,[2000,3000]);
+function hide_lose_screen() {
+    update_position(lose_text, [2000, 3000]);
     hide_restart_screen();
 }
 
 
-function show_restart()
-{
-    update_to_top(update_position(restart_text,[300,400]));
+function show_restart() {
+    update_to_top(update_position(restart_text, [300, 400]));
 }
 
-function hide_restart_screen(){
-    update_position(restart_text,[2000,3000]);
+function hide_restart_screen() {
+    update_position(restart_text, [2000, 3000]);
 }
 
 
@@ -428,6 +500,16 @@ function hide_restart_screen(){
 
 function update_player_movement() {
     const movement_dist = TILE_SIZE;
+
+    function add_vectors(to, from) {
+        to[0] = to[0] + from[0];
+        to[1] = to[1] + from[1];
+    }
+
+    function add_vectors_new(a, b) {
+        return [a[0] + b[0], a[1] + b[1]];
+    }
+
     function collisionWall(dir, pos) {
         let v = [0, 0];
         if (dir === "w") {
@@ -439,21 +521,21 @@ function update_player_movement() {
         } else if (dir === "d") {
             v = [movement_dist, 0];
         }
-    
+
         const test_pos = add_vectors_new(pos, v);
         const col = math_floor(test_pos[0] / TILE_SIZE) - 1; // Adjust for offset
         const row = math_floor(test_pos[1] / TILE_SIZE) - 3; // Adjust for offset
-        
+
         if (
             row < 0 || row >= array_length(tile_map) ||
             col < 0 || col >= array_length(tile_map[0])
         ) {
             return true;
         }
-        
+
         return tile_map[row][col] === 1;
     }
-    
+
     function velocity(dir, pos) {
         if (dir === "w" && !collisionWall(dir, pos)) {
             add_vectors(pos, [0, -movement_dist]);
@@ -472,9 +554,9 @@ function update_player_movement() {
             update_rotation(pacman, math_PI * 0.5);
         }
     }
-    
+
     const current_position = query_position(pacman);
-    
+
     // Check for new input to change direction
     if (input_key_down("w")) {
         current_direction = "w";
@@ -488,7 +570,7 @@ function update_player_movement() {
     if (input_key_down("d")) {
         current_direction = "d";
     }
-    
+
     // Continue moving in the current direction if no wall collision
     if (current_direction !== "" && !collisionWall(current_direction, current_position)) {
         velocity(current_direction, current_position);
@@ -496,7 +578,7 @@ function update_player_movement() {
         // Stop movement if hitting a wall
         current_direction = "";
     }
-    
+
     update_position(pacman, current_position);
 }
 
@@ -513,58 +595,146 @@ function update_new_position(dir, x, y) {
     }
 }
 
+
+
+
 function update_monsters() {
-    
-    for(let i = 0 ; i < array_length(monsters); i = i + 1)
-    {
-    const monster_info = monsters[i];
-    const sprite = get_array_element(monster_info, 0);
-    let x = get_array_element(monster_info, 1);
-    let y = get_array_element(monster_info, 2);
-    let dir = get_array_element(monster_info, 3);
+    for (let i = 0; i < array_length(monsters); i = i + 1) {
+        const monster_info = monsters[i];
+        const sprite = get_array_element(monster_info, 0);
+        let x = get_array_element(monster_info, 1);
+        let y = get_array_element(monster_info, 2);
+        let dir = get_array_element(monster_info, 3);
+        let isLeft = get_array_element(monster_info, 4);
 
-    // crossroad logic
-    const valid_dirs = get_valid_directions(x, y, dir);
-    if (array_length(valid_dirs) >= 2) {
-        dir = get_array_element(valid_dirs, math_floor(math_random() * array_length(valid_dirs)));
-    }
-    
-    let moved = false;
-    let attempts = 0;
+        //valid means that
+        //no hitting the wall and not equal to the current direction
+        
+        const valid_dirs = get_valid_directions(x, y, dir);
+        const valid_num = array_length(valid_dirs);
 
-    while (!moved && attempts < 4) {
-        const newpos = update_new_position(dir, x, y);
+        let newdir = dir;
+
+        shuffle_array(valid_dirs);
+        //shuffle the array to make route less similar
+
+
+        // more than one valid direction , can apply smart mode
+        if (valid_num >= 2) {
+            const use_smart_move = math_random() < 0.6; // 60% use judge-distance
+            if (use_smart_move) {
+                let best_dir = dir;
+                let min_dist = 999999;
+                for (let j = 0; j < valid_num; j = j + 1) {
+                    const try_dir = get_array_element(valid_dirs, j);
+                    const try_pos = update_new_position(try_dir, x, y);
+                    const try_x = get_array_element(try_pos, 0);
+                    const try_y = get_array_element(try_pos, 1);
+
+                    if (!is_occupied(try_x, try_y, i)) {
+                        const pacman_position = query_position(pacman);
+                        const pacman_x = pacman_position[0] / TILE_SIZE;
+                        const pacman_y = pacman_position[1] / TILE_SIZE;
+                        const d = distance(try_x, try_y, pacman_x, pacman_y);
+                        if (d < min_dist) {
+                            min_dist = d;
+                            best_dir = try_dir;
+                        }
+                    }
+                }
+
+                if (min_dist !== 999999) {
+                    newdir = best_dir;
+                } else {
+                    newdir = opposite_direction(dir);
+                }
+            } else {
+                // 40% random
+                let found = false;
+                for (let j = 0; j < valid_num; j = j + 1) {
+                    const try_dir = get_array_element(valid_dirs, j);
+                    const try_pos = update_new_position(try_dir, x, y);
+                    const try_x = get_array_element(try_pos, 0);
+                    const try_y = get_array_element(try_pos, 1);
+
+                    // reduce the chance to have the same route
+                    if (!is_occupied(try_x, try_y, i)) {
+                        newdir = try_dir;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    newdir = opposite_direction(dir);
+                }
+            }
+        }
+
+
+
+        else if (valid_num === 0) {
+            newdir = opposite_direction(dir);
+            // highest priority , avoid  hitting the wall
+
+        } else {
+            const try_pos = update_new_position(valid_dirs[0], x, y);
+            const try_x = get_array_element(try_pos, 0);
+            const try_y = get_array_element(try_pos, 1);
+            if (!is_occupied(try_x, try_y, i)) {
+                newdir = valid_dirs[0];
+            } else {
+                newdir = opposite_direction(dir);
+            }
+        }
+
+
+        const newpos = update_new_position(newdir, x, y);
         const newx = get_array_element(newpos, 0);
         const newy = get_array_element(newpos, 1);
-        debug_log(newx);
-        debug_log(newy);
 
-        const hitWall = predic_wall(newx, newy);
-        
-        debug_log(hitWall);
-        
-        if (!hitWall) {
-            // Successfully moved
-            x = newx;
-            y = newy;
-            monsters[i][1] = x;
-            monsters[i][2] = y;
-            monsters[i][3] = dir;
-            update_position(sprite, [x * TILE_SIZE, y * TILE_SIZE]);
-            moved = true;
-        } else {
-            // Try different direction
-            dir = math_floor(math_random() * 4);
-            attempts = attempts + 1;
-            debug_log(attempts);
+        // renew the state
+        monsters[i][1] = newx;
+        monsters[i][2] = newy;
+        monsters[i][3] = newdir;
+        update_position(sprite, [x * TILE_SIZE, y * TILE_SIZE]);
+
+        // renew the image's direction
+        if (newdir === 2 || newdir === 3) {
+            const shouldFlip = (newdir === 2);
+            if (isLeft !== shouldFlip) {
+                update_flip(sprite, [shouldFlip, false]);
+                monsters[i][4] = shouldFlip;
+            }
         }
-    }
     }
 }
 
 
 // === UI Functions ===
 
+function show_skin_menu() {
+    update_position(title, [2000, 2000]);
+    update_position(start_button, [2000, 2000]);
+    update_position(options, [300, 100]);
+    update_scale(options, [3, 3]);
+    // Hide all skins
+    for (let i = 0; i < array_length(skins); i = i + 1) {
+        update_position(skins[i], [2500, 2500]);
+    }
+    // Show only the current skin
+    if (skin_index === 1) {
+        update_scale(skins[skin_index], [0.1, 0.1]);
+    } else {
+        update_scale(skins[skin_index], [35 / 46, 35 / 45]);
+    }
+    update_position(skins[skin_index], [300, 200]);
+    update_position(prev, [100, 200]);
+    update_scale(prev, [1.5, 1.5]);
+    update_position(next, [500, 200]);
+    update_scale(next, [1.5, 1.5]);
+    // Show s_text on skin menu
+    update_position(s_text, [300, 350]);
+}
 
 function show_pause_menu() {
     update_to_top(update_position(pause_title, [300, 200]));
@@ -582,18 +752,31 @@ function update_score_display() {
 
 function show_game_screen() {
     hide_start_menu();
+    update_position(options, [1000, 1000]);
+    update_position(s_text, [3000, 3000]);
+    for (let i = 0; i < array_length(skins); i = i + 1) {
+        update_position(skins[i], [5000, 5000]); // Hide all skins
+    }
+    // Show only the selected skin at the starting position
+    if (skin_index === 1) {
+        update_scale(skins[skin_index], [3.5 / 50, 3.5 / 50]);
+    } else {
+        update_scale(skins[skin_index], [35 / 46, 35 / 45]);
+    }
+    update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+    pacman = skins[skin_index];
+    update_position(next, [3000, 3000]);
+    update_position(prev, [3100, 3100]);
     show_map();
     show_gameMenu();
 }
 
-function show_start_menu()
-{
+function show_start_menu() {
     update_to_top(update_position(title, [300, 150]));
     update_to_top(update_position(start_button, [300, 350]));
 }
 
-function hide_start_menu()
-{
+function hide_start_menu() {
     update_position(title, [1500, 1000]);
     update_position(start_button, [2000, 1000]);
     update_position(monsters[0][0], [350, 350]);
@@ -614,7 +797,7 @@ function show_gameMenu() {
     update_to_top(update_position(score_text, [480, 40]));
     update_to_top(update_position(pause_text, [230, 40]));
     update_to_top(update_position(pause_button, [300, 40]));
-    update_to_top(update_position(game_title, [80, 40]));  
+    update_to_top(update_position(game_title, [80, 40]));
 }
 
 function restart_game() {
@@ -637,9 +820,25 @@ function game_loop(game_state) {
     if (startup) {
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
             show_game_screen();
-            update_to_top(update_position(pacman,[70,140]));
+            update_to_top(update_position(pacman, [70, 140]));
+            startup = false;
+        } if (pointer_over_gameobject(options) && input_left_mouse_down()) {
+            show_skin_menu();
+        }
+        if ((pointer_over_gameobject(next) && input_left_mouse_down()) && skin_index < array_length(skins) - 1) {
+            skin_index = skin_index + 1;
+            show_skin_menu();
+        }
+        if ((pointer_over_gameobject(prev) && input_left_mouse_down()) && skin_index > 0) {
+            skin_index = skin_index - 1;
+            show_skin_menu();
+        }
+        // Handle s_text click to show game screen
+        if (pointer_over_gameobject(s_text) && input_left_mouse_down()) {
+            show_game_screen();
             startup = false;
         }
+
     } else {
         if (isPaused) {
             show_pause_menu();
@@ -649,71 +848,69 @@ function game_loop(game_state) {
                 //startup = true ;
             }
         } else {
-            
-            if(isWin){
-                score = 0 ;
+
+            if (isWin) {
+                score = 0;
                 reset_all_dots();
                 //reset the map !
-                
+
                 update_score_display();
                 show_win_screen();
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
-                isWin = false;
-                hide_win_screen();
-                startup = true ;
-                show_start_menu();
+                    isWin = false;
+                    hide_win_screen();
+                    startup = true;
+                    show_start_menu();
                 }
             }
-            
-            else if (isLose)
-            {
+
+            else if (isLose) {
                 show_lose_screen();
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
-                isLose = false;
-                hide_lose_screen();
-                
+                    isLose = false;
+                    hide_lose_screen();
+
                 }
             }
-            
-            else
-            {
-            if (pointer_over_gameobject(pause_button) && input_left_mouse_down()) {
-                isPaused = true;
+
+            else {
+                if (pointer_over_gameobject(pause_button) && input_left_mouse_down()) {
+                    isPaused = true;
+                }
+
+                hide_pause_menu();
+
+                if (score === totalScore) {
+                    isWin = true;
+                }
+
+                if (get_game_time() - prevTime > 700) {
+                    update_monsters();
+                    prevTime = get_game_time();
+                }
+
+
+                if (get_game_time() - prevTime2 > 180) {
+                    update_player_movement();
+                    prevTime2 = get_game_time();
+                }
+                // Check collisions
+                check_dot_collisions();
+                check_monster_collision();
+
+                debug_log("game_loop running");
+                count = count + 1;
+                update_score_display();
             }
-
-            hide_pause_menu();
-
-            if (score === totalScore) {
-                isWin = true ;
-            }
-
-            if (get_game_time() - prevTime > 700) {
-                update_monsters();
-                prevTime = get_game_time();
-            }
-
-        
-            if(get_game_time() - prevTime2>180){
-                update_player_movement();
-                prevTime2 = get_game_time();
-            }
-            // Check collisions
-            check_dot_collisions();
-            check_monster_collision();
-
-            debug_log("game_loop running");
-            count = count + 1;
-            update_score_display();
-        }
         }
     }
 }
 
 // === Game Entry Point ===
 
-function setup_pacman_game()
-{
+function setup_pacman_game() {
     setup_canvas();
+    setup_skin_menu();
     setup_gameMenu();
     setup_pause_menu();
     setup_startup_screen();
