@@ -334,9 +334,9 @@ function setup_maze_and_dots() {
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
         [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1],
         [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
         [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
@@ -621,8 +621,8 @@ function update_monsters() {
 
         // more than one valid direction , can apply smart mode
         if (valid_num >= 2) {
-            const use_smart_move = math_random() < 0.3; 
-            // 30% use judge-distance
+            const use_smart_move = math_random() < 0.21; 
+            // 21% use judge-distance
             if (use_smart_move) {
                 let best_dir = dir;
                 let min_dist = 999999;
@@ -660,7 +660,7 @@ function update_monsters() {
             
                 }
             } else {
-                // 70% random
+                // 79% random
                 let found = false;
                 for (let j = 0; j < valid_num; j = j + 1) {
                     const try_dir = get_array_element(valid_dirs, j);
