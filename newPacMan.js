@@ -621,16 +621,20 @@ function update_monsters() {
 
         // more than one valid direction , can apply smart mode
         if (valid_num >= 2) {
-            const use_smart_move = math_random() < 0.6; // 60% use judge-distance
+            const use_smart_move = math_random() < 0.3; 
+            // 30% use judge-distance
             if (use_smart_move) {
                 let best_dir = dir;
                 let min_dist = 999999;
+                
                 for (let j = 0; j < valid_num; j = j + 1) {
                     const try_dir = get_array_element(valid_dirs, j);
                     const try_pos = update_new_position(try_dir, x, y);
                     const try_x = get_array_element(try_pos, 0);
                     const try_y = get_array_element(try_pos, 1);
 
+                    // the collision of monster havr higher priority than the 
+                    // "smart" mode
                     if (!is_occupied(try_x, try_y, i)) {
                         const pacman_position = query_position(pacman);
                         const pacman_x = pacman_position[0] / TILE_SIZE;
@@ -646,10 +650,17 @@ function update_monsters() {
                 if (min_dist !== 999999) {
                     newdir = best_dir;
                 } else {
-                    newdir = opposite_direction(dir);
+                    // we will only go into this case when this monster is
+                    // surrounded by other monster , so just give a random
+                    newdir = valid_dirs[0] ; 
+                    //because of shuffle function , it is already a random dir
+                
+                    //and we might not return oppsite_direction()
+                    
+            
                 }
             } else {
-                // 40% random
+                // 70% random
                 let found = false;
                 for (let j = 0; j < valid_num; j = j + 1) {
                     const try_dir = get_array_element(valid_dirs, j);
@@ -665,7 +676,7 @@ function update_monsters() {
                     }
                 }
                 if (!found) {
-                    newdir = opposite_direction(dir);
+                    newdir = valid_dirs[0];
                 }
             }
         }
@@ -675,8 +686,17 @@ function update_monsters() {
         else if (valid_num === 0) {
             newdir = opposite_direction(dir);
             // highest priority , avoid  hitting the wall
+            // no more thing to do 
 
-        } else {
+        } 
+        
+        
+        // 2 cases in one valid-dir situation
+        //    # # #          # # #
+        //      O #            O
+        //    #   #          # # #
+        
+        else {
             const try_pos = update_new_position(valid_dirs[0], x, y);
             const try_x = get_array_element(try_pos, 0);
             const try_y = get_array_element(try_pos, 1);
