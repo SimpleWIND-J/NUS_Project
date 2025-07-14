@@ -526,13 +526,13 @@ function reset_monsters() {
         update_position(sprite, [1000, 2000]);
 
         if (monsterIndex === 0) {
-            monsters[monsterIndex] = [sprite, 7 + offset_x, 7 + offset_y, newdirection, newisLeft];
+            monsters[monsterIndex] = [sprite, 7 + offset_x, 6 + offset_y, newdirection, newisLeft];
         } else if (monsterIndex === 1) {
-            monsters[monsterIndex] = [sprite, 7 + offset_x, 8 + offset_y, newdirection, newisLeft];
+            monsters[monsterIndex] = [sprite, 7 + offset_x, 7 + offset_y, newdirection, newisLeft];
         } else if (monsterIndex === 2) {
-            monsters[monsterIndex] = [sprite, 8 + offset_x, 7 + offset_y, newdirection, newisLeft];
+            monsters[monsterIndex] = [sprite, 8 + offset_x, 6 + offset_y, newdirection, newisLeft];
         } else if (monsterIndex === 3) {
-            monsters[monsterIndex] = [sprite, 8 + offset_x, 8 + offset_y, newdirection, newisLeft];
+            monsters[monsterIndex] = [sprite, 8 + offset_x, 7 + offset_y, newdirection, newisLeft];
         }
     }
 }
