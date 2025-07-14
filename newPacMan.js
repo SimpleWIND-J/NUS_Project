@@ -1230,8 +1230,7 @@ function game_loop(game_state) {
                 hide_pause_menu();
 
                 // handle with the reborn case
-                // ...existing code...
-                // 玩家1无敌
+                // player 1
                 if (isReborn1) {
                     if (get_game_time() - rebornStart1 > rebornTime) {
                         isReborn1 = false;
@@ -1241,7 +1240,7 @@ function game_loop(game_state) {
                 } else {
                     update_color(pacman[0], [255, 255, 0, 255]);
                 }
-                // 玩家2无敌
+                // player2
                 if (isReborn2) {
                     if (get_game_time() - rebornStart2 > rebornTime) {
                         isReborn2 = false;
