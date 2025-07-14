@@ -67,8 +67,8 @@ let title = undefined;
 let startup = true;
 let start_button = undefined;
 
-let map_width = 800;
-let map_height = 800;
+let canvas_width = 600;
+let canvas_height = 650;
 
 let power_mode = false;
 let power_timer = 0;
@@ -282,7 +282,7 @@ function check_monster_collision() {
 
 //--------- UI FUNCTIONS     ------------------
 function setup_canvas() {
-    set_dimensions([600, 650]); //TODO
+    set_dimensions([canvas_width, canvas_height]); //TODO
     set_fps(100);
 }
 
@@ -395,7 +395,7 @@ const tile_maps = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
-        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
         [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1],
@@ -472,7 +472,7 @@ function setup_player() {
         update_position(skins[i], [5000, 5000]); // Hide initially
     }
     // Show the default skin
-    update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+    // update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
     pacman[0] = skins[skin_index];
 
     // Create second pacman for multi-mode (will be positioned later when mode is set)
@@ -963,7 +963,7 @@ function update_map(new_index) {
 
     // Update pacman position to valid starting position
     const start_pos = [(start_x + 1) * TILE_SIZE, (start_y + 3) * TILE_SIZE];
-    update_position(pacman[0], start_pos);
+    //update_position(pacman[0], start_pos);
 
     // Handle second pacman in multi-mode
     if (mode === 1) {
@@ -1198,7 +1198,7 @@ function game_loop(game_state) {
                 while (new_map_index === current_map_index) {
                     new_map_index = math_floor(math_random() * array_length(tile_maps));
                 }
-                update_map(new_map_index);
+                //update_map(new_map_index);
 
                 reset_monsters();
 
