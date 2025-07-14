@@ -1119,16 +1119,29 @@ function update_monsters() {
                     const try_x = get_array_element(try_pos, 0);
                     const try_y = get_array_element(try_pos, 1);
 
-                    // the collision of monster havr higher priority than the 
+                    // the collision of monster havr higher priority than the
                     // "smart" mode
                     if (!is_occupied(try_x, try_y, i)) {
-                        const pacman_position = query_position(pacman[0]);
-                        const pacman_x = pacman_position[0] / TILE_SIZE;
-                        const pacman_y = pacman_position[1] / TILE_SIZE;
-                        const d = distance(try_x, try_y, pacman_x, pacman_y);
-                        if (d < min_dist) {
-                            min_dist = d;
+                        const pacman0_position = query_position(pacman[0]);
+                        const pacman0_x = pacman0_position[0] / TILE_SIZE;
+                        const pacman0_y = pacman0_position[1] / TILE_SIZE;
+                        const d0 = distance(try_x, try_y, pacman0_x, pacman0_y);
+                        if (d0 < min_dist) {
+                            min_dist = d0;
                             best_dir = try_dir;
+                        }
+
+                        if (mode === 1) {
+                            // if mode is 1 , we have two pacman
+                            const pacman1_position = query_position(pacman[1]);
+                            const pacman1_x = pacman1_position[0] / TILE_SIZE;
+                            const pacman1_y = pacman1_position[1] / TILE_SIZE;
+                            const d1 = distance(try_x, try_y, pacman1_x, pacman1_y);
+                            if (d1 < min_dist) {
+                                min_dist = d1;
+                                best_dir = try_dir;
+                            }
+
                         }
                     }
                 }
@@ -1492,9 +1505,9 @@ function game_loop(game_state) {
             update_position(pacman[0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
             update_to_top(pacman[0]);
             if (skin_index2 === 1) {
-                update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                update_scale(pacman[1], [3.3 / 50, 3.3 / 50]);
             } else {
-                update_scale(pacman[1], [35 / 46, 35 / 45]);
+                update_scale(pacman[1], [33 / 46, 33 / 45]);
             }
             update_position(pacman[1], [13 * TILE_SIZE, 5 * TILE_SIZE]);
             update_to_top(pacman[1]);
@@ -1646,7 +1659,7 @@ function game_loop(game_state) {
                 }
                 update_text(level_text, "Level: " + stringify(gamelevel));
 
-                update_to_top(update_position(lives_text, [80,  60]));
+                update_to_top(update_position(lives_text, [80, 60]));
                 update_to_top(update_position(level_text, [80, 80]));
             }
         }
@@ -1673,7 +1686,7 @@ function setup_pacman_game() {
     setup_next_level_text(); 
 }
 
-enable_debug();
+//enable_debug();
 
 setup_pacman_game();
 update_loop(game_loop);
