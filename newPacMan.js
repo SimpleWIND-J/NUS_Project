@@ -1098,9 +1098,9 @@ function game_loop(game_state) {
 
                 hide_pause_menu();
 
-                // 处理重生无敌状态
+                // handle with the reborn case
                 if (isReborn) {
-                    // 判断无敌时间是否结束
+                    // check the undefeated time
                     if (get_game_time() - rebornStart > rebornTime) {
                         isReborn = false;
                         
