@@ -530,9 +530,9 @@ function setup_player() {
     for (let i = 0; i < array_length(url_arr); i = i + 1) {
         skins[i] = create_sprite(url_arr[i]);
         if (i === 1) {
-            update_scale(skins[i], [3.5 / 50, 3.5 / 50]);
+            update_scale(skins[i], [3.4 / 50, 3.4 / 50]);
         } else {
-            update_scale(skins[i], [35 / 46, 35 / 45]);
+            update_scale(skins[i], [33 / 46, 33 / 45]);
         }
         update_position(skins[i], [5000, 5000]); // Hide initially
     }
@@ -651,7 +651,7 @@ function setup_skin_menu() {
 
     skins[1] = create_sprite(red_url);
     update_position(skins[1], [3500, 2500]);
-    update_scale(skins[1], [3.5 / 50, 3.5 / 50]);
+    update_scale(skins[1], [3.4 / 50, 3.4 / 50]);
 
 
     prev = create_text("<");
@@ -757,13 +757,13 @@ function update_tweens() {
                 // Re-apply correct scale
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[1], [35 / 46, 35 / 45]);
                     }
@@ -779,13 +779,13 @@ function update_tweens() {
                 update_position(pacman[p], [ecol * TILE_SIZE, erow * TILE_SIZE]);
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[1], [35 / 46, 35 / 45]);
                     }
@@ -834,13 +834,13 @@ function update_tweens() {
                 update_position(pacman[p], pos);
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
                     } else {
                         update_scale(pacman[1], [35 / 46, 35 / 45]);
                     }
@@ -1327,9 +1327,9 @@ function show_skin_menu() {
     }
     // Show only the current skin
     if (skin_index === 1) {
-        update_scale(skins[skin_index], [3.5 / 50, 3.5 / 50]);
+        update_scale(skins[skin_index], [3.3 / 50, 3.3 / 50]);
     } else {
-        update_scale(skins[skin_index], [35 / 46, 35 / 45]);
+        update_scale(skins[skin_index], [33 / 46, 33 / 45]);
     }
     update_position(skins[skin_index], [300, 200]);
     update_position(prev, [100, 200]);
@@ -1366,9 +1366,9 @@ function show_game_screen() {
     }
     // Show only the selected skin at the starting position
     if (skin_index === 1) {
-        update_scale(skins[skin_index], [3.5 / 50, 3.5 / 50]);
+        update_scale(skins[skin_index], [3.3 / 50, 3.3 / 50]);
     } else {
-        update_scale(skins[skin_index], [35 / 46, 35 / 45]);
+        update_scale(skins[skin_index], [33 / 46, 33 / 45]);
     }
     update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
     pacman[0] = skins[skin_index];
@@ -1377,9 +1377,9 @@ function show_game_screen() {
     // Handle multi-mode
     if (mode === 1) {
         if (skin_index2 === 1) {
-            update_scale(skins[skin_index2], [3.5 / 50, 3.5 / 50]);
+            update_scale(skins[skin_index2], [3.3 / 50, 3.3 / 50]);
         } else {
-            update_scale(skins[skin_index2], [35 / 46, 35 / 45]);
+            update_scale(skins[skin_index2], [33 / 46, 33 / 45]);
         }
         // Position second pacman in a valid corridor (column 13, row 5)
         update_position(skins[skin_index2], [13 * TILE_SIZE, 5 * TILE_SIZE]);
@@ -1461,7 +1461,7 @@ function game_loop(game_state) {
             show_game_screen();
             // Always set correct scale and bring to top after position update
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
             } else {
                 update_scale(pacman[0], [35 / 46, 35 / 45]);
             }
@@ -1479,12 +1479,12 @@ function game_loop(game_state) {
             skin_index = skin_index - 1;
             show_skin_menu();
         }
-        // Handle s_text click to show game screen
+        // Handle s_text global variable click to show game screen
         if (pointer_over_gameobject(s_text) && input_left_mouse_down()) {
             show_game_screen();
             // Always set correct scale and bring to top after position update
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
             } else {
                 update_scale(pacman[0], [35 / 46, 35 / 45]);
             }
@@ -1498,14 +1498,14 @@ function game_loop(game_state) {
             show_game_screen();
             // Always set correct scale and bring to top after position update for both pacmen
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
             } else {
                 update_scale(pacman[0], [35 / 46, 35 / 45]);
             }
             update_position(pacman[0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
             update_to_top(pacman[0]);
             if (skin_index2 === 1) {
-                update_scale(pacman[1], [3.3 / 50, 3.3 / 50]);
+                update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
             } else {
                 update_scale(pacman[1], [33 / 46, 33 / 45]);
             }
