@@ -1670,7 +1670,7 @@ function setup_pacman_game() {
     setup_fail_screen();
     setup_lose_screen();
     setup_restart();
-    setup_next_level_text(); // 初始化下一关文本
+    setup_next_level_text(); 
 }
 
 enable_debug();
