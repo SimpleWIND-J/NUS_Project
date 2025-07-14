@@ -1043,7 +1043,10 @@ function game_loop(game_state) {
         }
         // Handle s_text click to show game screen
         if (pointer_over_gameobject(s_text) && input_left_mouse_down()) {
+            update_map(new_map_index);
+            
             show_game_screen();
+            
             startup = false;
         }
 
