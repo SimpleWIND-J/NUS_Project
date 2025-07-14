@@ -94,8 +94,17 @@ let prevTime2 = 0;
 
 
 //control the speed 
-const monsterThreshold = 700 ;
-const pacmanThershold = 250 ;
+const monsterThreshold = 700;
+const pacmanThershold = 250;
+
+
+// game level
+let level = 0;
+
+let rebornTime = 3000;
+let isReborn = false;
+let rebornStart = 0;
+
 
 //============================================================
 
@@ -230,8 +239,12 @@ function check_monster_collision() {
     while (i < array_length(monsters)) {
         const m = monsters[i][0];
         if (gameobjects_overlap(m, pacman)) {
-            if (!power_mode) {
+            if (!power_mode && !isReborn) {
                 isLose = true;
+
+                //
+                isReborn = true;
+                //rebornStart = get_game_time();
             }
         }
         i = i + 1;
@@ -356,12 +369,12 @@ const tile_maps = [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
-        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
         [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1],
         [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1],
-        [1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1],
         [1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
@@ -1009,7 +1022,10 @@ function game_loop(game_state) {
     //debug_log(count);
 
     if (startup) {
+
+
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
+
             update_map(new_map_index);
             show_game_screen();
             update_to_top(update_position(pacman, [70, 140]));
@@ -1030,6 +1046,8 @@ function game_loop(game_state) {
             show_game_screen();
             startup = false;
         }
+
+
 
     } else {
         if (isPaused) {
@@ -1068,7 +1086,8 @@ function game_loop(game_state) {
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
                     isLose = false;
                     hide_lose_screen();
-
+                    rebornStart = get_game_time();
+                    //count the time of reborn at this position
                 }
             }
 
@@ -1079,6 +1098,21 @@ function game_loop(game_state) {
 
                 hide_pause_menu();
 
+                // 处理重生无敌状态
+                if (isReborn) {
+                    // 判断无敌时间是否结束
+                    if (get_game_time() - rebornStart > rebornTime) {
+                        isReborn = false;
+                        
+                    } else {
+                        //TODO : make an animation of blinking?
+                        update_color(pacman, [0, 255, 255, 255]);
+                    }
+                } else {
+                    //TODO
+                    update_color(pacman, [255, 255, 0, 255]);
+                }
+
                 if (score === totalScore) {
                     isWin = true;
                 }
@@ -1087,7 +1121,6 @@ function game_loop(game_state) {
                     update_monsters();
                     prevTime = get_game_time();
                 }
-
 
                 if (get_game_time() - prevTime2 > pacmanThershold) {
                     update_player_movement();
