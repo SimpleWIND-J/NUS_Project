@@ -101,12 +101,12 @@ let prevTime2 = 0;
 
 
 
-//control the speed 
-const monsterThreshold = 700;
-const pacmanThershold = 250;
+//control the speed
+let monsterThreshold = 700;
+let pacmanThershold = 220;
 
 // game level
-let gamelevel = 0;
+let gamelevel = 1;
 
 let rebornTime = 3000;
 let isReborn1 = false;
@@ -114,7 +114,53 @@ let rebornStart1 = 0;
 let isReborn2 = false;
 let rebornStart2 = 0;
 
+
+let smartchance = 0.21; // 21% chance to use smart move
+
+
+
+let lives1 = 3;
+let lives2 = 3;
+let isFail = false; // Flag to indicate if the game is over
 //============================================================
+
+
+
+
+
+
+
+let fail_text = undefined;
+
+function setup_fail_screen() {
+    fail_text = create_text("GAME OVER!");
+    update_position(fail_text, [3000, 4000]);
+    update_scale(fail_text, [4, 4]);
+}
+
+function show_fail_screen() {
+    update_to_top(update_position(fail_text, [300, 200]));
+    show_restart();
+}
+
+function hide_fail_screen() {
+    update_position(fail_text, [3000, 4000]);
+    hide_restart_screen();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -254,18 +300,25 @@ function check_monster_collision() {
         // player1
         if (gameobjects_overlap(m, pacman[0])) {
             if (!power_mode && !isReborn1) {
-                isLose = true;
-                isReborn1 = true;
-                //rebornStart1 = get_game_time();
-                //this shall be handled in the game loop
+                lives1 = lives1 - 1;
+                if (lives1 > 0) {
+                    isLose = true;
+                    isReborn1 = true;
+                } else {
+                    isFail = true;
+                }
             }
         }
         // player2
         if (gameobjects_overlap(m, pacman[1])) {
             if (!power_mode && !isReborn2) {
-                isLose = true;
-                isReborn2 = true;
-                //rebornStart2 = get_game_time();
+                lives2 = lives2 - 1;
+                if (lives2 > 0) {
+                    isLose = true;
+                    isReborn2 = true;
+                } else {
+                    isFail = true;
+                }
             }
         }
     }
@@ -314,6 +367,9 @@ function setup_pause_menu() {
     update_scale(resume_button, [2, 2]);
 }
 
+let lives_text = undefined;
+let level_text = undefined;
+
 function setup_gameMenu() {
     score_text = create_text("Your Score is: 0");
     update_position(score_text, [1000, 1000]);
@@ -330,6 +386,15 @@ function setup_gameMenu() {
     game_title = create_text("PACMAN");
     update_position(game_title, [1000, 1000]);
     update_scale(game_title, [1.5, 1.5]);
+
+    // 新增生命值和关卡文本对象
+    lives_text = create_text("Lives: 3");
+    update_position(lives_text, [2300, 80]);
+    update_scale(lives_text, [1.1, 1.1]);
+
+    level_text = create_text("Level: 1");
+    update_position(level_text, [80, 1100]);
+    update_scale(level_text, [1.1, 1.1]);
 }
 
 function setup_win_screen() {
@@ -525,7 +590,15 @@ function setup_monsters() {
         else {
             push(monsters, build_monsters(10, 10, monsterIndex));
         }
-    }//setup all the monsters
+    }//setup all the monsters    
+
+    monster_tweens = [];
+    for (let i = 0; i < array_length(monsters); i = i + 1) {
+        // [active, start, end, progress, direction]
+        push(monster_tweens, [false, [0, 0], [0, 0], 0, 0]);
+    }
+
+
 }
 
 
@@ -606,10 +679,9 @@ function setup_skin_menu() {
 
 
 //============== SHOW AND HIDE FUNCTIONS ==================
-
 function show_win_screen() {
     update_to_top(update_position(win_text, [300, 200]));
-    show_restart();
+    update_to_top(update_position(next_level_text, [300, 400]));
     for (let i = 0; i < array_length(pacman); i = i + 1) {
         update_position(pacman[i], [3500, 3500]);
     }
@@ -617,7 +689,7 @@ function show_win_screen() {
 
 function hide_win_screen() {
     update_position(win_text, [2000, 3000]);
-    hide_restart_screen();
+    update_position(next_level_text, [3000, 4200]);
 }
 
 
@@ -654,111 +726,346 @@ function hide_restart_screen() {
 
 //================== UPDATE FUNCTIONS ===========================
 
+// === Tween Animation State ===
+let pacman_tweens = [
+    [false, [0, 0], [0, 0], 0, ""], // [active, start, end, progress, direction] for player 1
+    [false, [0, 0], [0, 0], 0, ""]  // for player 2
+];
+let monster_tweens = [];
+
+function update_tweens() {
+    for (let p = 0; p < 2; p = p + 1) {
+        if (pacman_tweens[p][0]) {
+            // Check if the end position is a wall BEFORE interpolating
+            const end = pacman_tweens[p][2];
+            let col = math_round(end[0] / TILE_SIZE);
+            let row = math_round(end[1] / TILE_SIZE);
+            let is_wall = false;
+            if (
+                row - 3 < 0 || row - 3 >= array_length(tile_map) ||
+                col - 1 < 0 || col - 1 >= array_length(tile_map[0]) ||
+                tile_map[row - 3][col - 1] !== 0
+            ) {
+                is_wall = true;
+            }
+            if (is_wall) {
+                // Snap to nearest valid tile center
+                const start = pacman_tweens[p][1];
+                let scol = math_round(start[0] / TILE_SIZE);
+                let srow = math_round(start[1] / TILE_SIZE);
+                update_position(pacman[p], [scol * TILE_SIZE, srow * TILE_SIZE]);
+                // Re-apply correct scale
+                if (p === 0) {
+                    if (skin_index === 1) {
+                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                    }
+                } else {
+                    if (skin_index2 === 1) {
+                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                    }
+                }
+                pacman_tweens[p][0] = false;
+                continue;
+            }
+            pacman_tweens[p][3] = pacman_tweens[p][3] + 0.05;
+            if (pacman_tweens[p][3] >= 1) {
+                // Snap to center of target tile
+                let ecol = math_round(pacman_tweens[p][2][0] / TILE_SIZE);
+                let erow = math_round(pacman_tweens[p][2][1] / TILE_SIZE);
+                update_position(pacman[p], [ecol * TILE_SIZE, erow * TILE_SIZE]);
+                if (p === 0) {
+                    if (skin_index === 1) {
+                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                    }
+                } else {
+                    if (skin_index2 === 1) {
+                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                    }
+                }
+                pacman_tweens[p][0] = false;
+                // After tween completes, try to start a new tween in the same direction if possible
+                const dir = pacman_tweens[p][4];
+                const pos = [ecol * TILE_SIZE, erow * TILE_SIZE];
+                const movement_dist = TILE_SIZE;
+                let v = [0, 0];
+                if (dir === "w") { v = [0, -movement_dist]; }
+                if (dir === "a") { v = [-movement_dist, 0]; }
+                if (dir === "s") { v = [0, movement_dist]; }
+                if (dir === "d") { v = [movement_dist, 0]; }
+                const next_pos = [pos[0] + v[0], pos[1] + v[1]];
+                // Check collision for next tile
+                let can_move = false;
+                let ncol = math_round(next_pos[0] / TILE_SIZE);
+                let nrow = math_round(next_pos[1] / TILE_SIZE);
+                if (
+                    nrow - 3 >= 0 && nrow - 3 < array_length(tile_map) &&
+                    ncol - 1 >= 0 && ncol - 1 < array_length(tile_map[0]) &&
+                    tile_map[nrow - 3][ncol - 1] === 0
+                ) {
+                    can_move = true;
+                }
+                if (can_move) {
+                    pacman_tweens[p][0] = true;
+                    pacman_tweens[p][1] = pos;
+                    pacman_tweens[p][2] = next_pos;
+                    pacman_tweens[p][3] = 0;
+                    // Keep direction
+                }
+            } else {
+                // Interpolate strictly between tile centers
+                const t = pacman_tweens[p][3];
+                const start = pacman_tweens[p][1];
+                const end = pacman_tweens[p][2];
+                let scol = math_round(start[0] / TILE_SIZE);
+                let srow = math_round(start[1] / TILE_SIZE);
+                let ecol = math_round(end[0] / TILE_SIZE);
+                let erow = math_round(end[1] / TILE_SIZE);
+                const spos = [scol * TILE_SIZE, srow * TILE_SIZE];
+                const epos = [ecol * TILE_SIZE, erow * TILE_SIZE];
+                const pos = [spos[0] + (epos[0] - spos[0]) * t, spos[1] + (epos[1] - spos[1]) * t];
+                update_position(pacman[p], pos);
+                if (p === 0) {
+                    if (skin_index === 1) {
+                        update_scale(pacman[0], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                    }
+                } else {
+                    if (skin_index2 === 1) {
+                        update_scale(pacman[1], [3.5 / 50, 3.5 / 50]);
+                    } else {
+                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                    }
+                }
+            }
+        }
+    }
+    // Monster tweens (new)
+    for (let i = 0; i < array_length(monster_tweens); i = i + 1) {
+        if (monster_tweens[i][0]) {
+            monster_tweens[i][3] = monster_tweens[i][3] + 0.0125; // smoother and slower than Pac-Man
+            if (monster_tweens[i][3] >= 1) {
+                update_position(monsters[i][0], monster_tweens[i][2]);
+                monster_tweens[i][0] = false;
+            } else {
+                const t = monster_tweens[i][3];
+                const start = monster_tweens[i][1];
+                const end = monster_tweens[i][2];
+                const pos = [start[0] + (end[0] - start[0]) * t, start[1] + (end[1] - start[1]) * t];
+                update_position(monsters[i][0], pos);
+            }
+        }
+    }
+}
+
 function update_player_movement() {
     const movement_dist = TILE_SIZE;
-
-    function add_vectors(to, from) {
-        to[0] = to[0] + from[0];
-        to[1] = to[1] + from[1];
-    }
-
-    function add_vectors_new(a, b) {
-        return [a[0] + b[0], a[1] + b[1]];
-    }
-
-    function collisionWall(dir, pos) {
-        let v = [0, 0];
-        if (dir === "w") {
-            v = [0, -movement_dist];
-        } else if (dir === "a") {
-            v = [-movement_dist, 0];
-        } else if (dir === "s") {
-            v = [0, movement_dist];
-        } else if (dir === "d") {
-            v = [movement_dist, 0];
-        }
-
-        const test_pos = add_vectors_new(pos, v);
-        const col = math_floor(test_pos[0] / TILE_SIZE) - 1; // Adjust for offset
-        const row = math_floor(test_pos[1] / TILE_SIZE) - 3; // Adjust for offset
-
-        if (
-            row < 0 || row >= array_length(tile_map) ||
-            col < 0 || col >= array_length(tile_map[0])
-        ) {
-            return true;
-        }
-
-        return tile_map[row][col] === 1;
-    }
-
-    function velocity(dir, pos, n_pac) {
-        if (dir === "w" && !collisionWall(dir, pos)) {
-            add_vectors(pos, [0, -movement_dist]);
-            update_rotation(pacman[n_pac], 0);
-        }
-        if (dir === "a" && !collisionWall(dir, pos)) {
-            add_vectors(pos, [-movement_dist, 0]);
-            update_rotation(pacman[n_pac], math_PI * 1.5);
-        }
-        if (dir === "s" && !collisionWall(dir, pos)) {
-            add_vectors(pos, [0, movement_dist]);
-            update_rotation(pacman[n_pac], math_PI);
-        }
-        if (dir === "d" && !collisionWall(dir, pos)) {
-            add_vectors(pos, [movement_dist, 0]);
-            update_rotation(pacman[n_pac], math_PI * 0.5);
-        }
-    }
-
-    const current_position = query_position(pacman[0]);
-
-    // Check for new input to change direction
+    // Player 1
+    // Only update desired_direction on key press (not while held)
+    let direction_changed = false;
+    let desired_direction = "";
+    let desired_direction2 = "";
+    let key_w = false;
+    let key_a = false;
+    let key_s = false;
+    let key_d = false;
     if (input_key_down("w")) {
-        current_direction = "w";
-    }
+        if (!key_w) { desired_direction = "w"; direction_changed = true; }
+        key_w = true;
+    } else { key_w = false; }
     if (input_key_down("a")) {
-        current_direction = "a";
-    }
+        if (!key_a) { desired_direction = "a"; direction_changed = true; }
+        key_a = true;
+    } else { key_a = false; }
     if (input_key_down("s")) {
-        current_direction = "s";
-    }
+        if (!key_s) { desired_direction = "s"; direction_changed = true; }
+        key_s = true;
+    } else { key_s = false; }
     if (input_key_down("d")) {
-        current_direction = "d";
+        if (!key_d) { desired_direction = "d"; direction_changed = true; }
+        key_d = true;
+    } else { key_d = false; }
+    // If a direction key was pressed and Pac-Man is tweening, try to change direction immediately if possible
+    if (pacman_tweens[0][0] && direction_changed) {
+        const pos = query_position(pacman[0]);
+        let v = [0, 0];
+        if (desired_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
+        if (desired_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
+        if (desired_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
+        if (desired_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+        const next_pos = [pos[0] + v[0], pos[1] + v[1]];
+        let can_move = false;
+        if (desired_direction !== "") {
+            let col = math_floor(next_pos[0] / TILE_SIZE) - 1;
+            let row = math_floor(next_pos[1] / TILE_SIZE) - 3;
+            if (
+                row >= 0 && row < array_length(tile_map) &&
+                col >= 0 && col < array_length(tile_map[0]) &&
+                tile_map[row][col] === 0
+            ) {
+                can_move = true;
+            }
+        }
+        if (can_move) {
+            // Interrupt current tween and start new tween in the new direction
+            pacman_tweens[0][1] = pos;
+            pacman_tweens[0][2] = next_pos;
+            pacman_tweens[0][3] = 0;
+            pacman_tweens[0][4] = desired_direction;
+            current_direction = desired_direction;
+        }
     }
-
-    // Continue moving in the current direction if no wall collision
-    if (current_direction !== "" && !collisionWall(current_direction, current_position)) {
-        velocity(current_direction, current_position, 0);
-    } else if (current_direction !== "" && collisionWall(current_direction, current_position)) {
-        // Stop movement if hitting a wall
-        current_direction = "";
+    if (!pacman_tweens[0][0]) {
+        const current_position = query_position(pacman[0]);
+        // Try desired_direction first
+        let v = [0, 0];
+        let try_dir = desired_direction !== "" ? desired_direction : current_direction;
+        if (try_dir === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
+        if (try_dir === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
+        if (try_dir === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
+        if (try_dir === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+        const next_pos = [current_position[0] + v[0], current_position[1] + v[1]];
+        let can_move = false;
+        if (try_dir !== "") {
+            let col = math_floor(next_pos[0] / TILE_SIZE) - 1;
+            let row = math_floor(next_pos[1] / TILE_SIZE) - 3;
+            if (
+                row >= 0 && row < array_length(tile_map) &&
+                col >= 0 && col < array_length(tile_map[0]) &&
+                tile_map[row][col] === 0
+            ) {
+                can_move = true;
+            }
+        }
+        if (can_move) {
+            pacman_tweens[0][0] = true;
+            pacman_tweens[0][1] = current_position;
+            pacman_tweens[0][2] = next_pos;
+            pacman_tweens[0][3] = 0;
+            pacman_tweens[0][4] = try_dir;
+            current_direction = try_dir;
+        } else if (current_direction !== "") {
+            // Try to continue in current direction if desired is not possible
+            v = [0, 0];
+            if (current_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
+            if (current_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
+            if (current_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
+            if (current_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+            const next_pos2 = [current_position[0] + v[0], current_position[1] + v[1]];
+            let can_move2 = false;
+            let col2 = math_floor(next_pos2[0] / TILE_SIZE) - 1;
+            let row2 = math_floor(next_pos2[1] / TILE_SIZE) - 3;
+            if (
+                row2 >= 0 && row2 < array_length(tile_map) &&
+                col2 >= 0 && col2 < array_length(tile_map[0]) &&
+                tile_map[row2][col2] === 0
+            ) {
+                can_move2 = true;
+            }
+            if (can_move2) {
+                pacman_tweens[0][0] = true;
+                pacman_tweens[0][1] = current_position;
+                pacman_tweens[0][2] = next_pos2;
+                pacman_tweens[0][3] = 0;
+                pacman_tweens[0][4] = current_direction;
+            }
+        }
     }
-
-    update_position(pacman[0], current_position);
-
-    if (mode === 1) {
+    // Player 2 (multiplayer)
+    let direction_changed2 = false;
+    if (input_key_down("i")) { desired_direction2 = "w"; direction_changed2 = true; }
+    if (input_key_down("j")) { desired_direction2 = "a"; direction_changed2 = true; }
+    if (input_key_down("k")) { desired_direction2 = "s"; direction_changed2 = true; }
+    if (input_key_down("l")) { desired_direction2 = "d"; direction_changed2 = true; }
+    if (mode === 1 && pacman_tweens[1][0] && direction_changed2) {
+        const pos2 = query_position(pacman[1]);
+        let v2 = [0, 0];
+        if (desired_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
+        if (desired_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
+        if (desired_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
+        if (desired_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+        const next_pos2 = [pos2[0] + v2[0], pos2[1] + v2[1]];
+        let can_move2 = false;
+        if (desired_direction2 !== "") {
+            let col2 = math_floor(next_pos2[0] / TILE_SIZE) - 1;
+            let row2 = math_floor(next_pos2[1] / TILE_SIZE) - 3;
+            if (
+                row2 >= 0 && row2 < array_length(tile_map) &&
+                col2 >= 0 && col2 < array_length(tile_map[0]) &&
+                tile_map[row2][col2] === 0
+            ) {
+                can_move2 = true;
+            }
+        }
+        if (can_move2) {
+            pacman_tweens[1][1] = pos2;
+            pacman_tweens[1][2] = next_pos2;
+            pacman_tweens[1][3] = 0;
+            pacman_tweens[1][4] = desired_direction2;
+            current_direction2 = desired_direction2;
+        }
+    }
+    if (mode === 1 && !pacman_tweens[1][0]) {
         const current_position2 = query_position(pacman[1]);
-        if (input_key_down("i")) {
-            current_direction2 = "w";
+        let v2 = [0, 0];
+        let try_dir2 = desired_direction2 !== "" ? desired_direction2 : current_direction2;
+        if (try_dir2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
+        if (try_dir2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
+        if (try_dir2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
+        if (try_dir2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+        const next_pos2 = [current_position2[0] + v2[0], current_position2[1] + v2[1]];
+        let can_move2 = false;
+        if (try_dir2 !== "") {
+            let col2 = math_floor(next_pos2[0] / TILE_SIZE) - 1;
+            let row2 = math_floor(next_pos2[1] / TILE_SIZE) - 3;
+            if (
+                row2 >= 0 && row2 < array_length(tile_map) &&
+                col2 >= 0 && col2 < array_length(tile_map[0]) &&
+                tile_map[row2][col2] === 0
+            ) {
+                can_move2 = true;
+            }
         }
-        if (input_key_down("j")) {
-            current_direction2 = "a";
+        if (can_move2) {
+            pacman_tweens[1][0] = true;
+            pacman_tweens[1][1] = current_position2;
+            pacman_tweens[1][2] = next_pos2;
+            pacman_tweens[1][3] = 0;
+            pacman_tweens[1][4] = try_dir2;
+            current_direction2 = try_dir2;
+        } else if (current_direction2 !== "") {
+            v2 = [0, 0];
+            if (current_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
+            if (current_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
+            if (current_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
+            if (current_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+            const next_pos22 = [current_position2[0] + v2[0], current_position2[1] + v2[1]];
+            let can_move22 = false;
+            let col22 = math_floor(next_pos22[0] / TILE_SIZE) - 1;
+            let row22 = math_floor(next_pos22[1] / TILE_SIZE) - 3;
+            if (
+                row22 >= 0 && row22 < array_length(tile_map) &&
+                col22 >= 0 && col22 < array_length(tile_map[0]) &&
+                tile_map[row22][col22] === 0
+            ) {
+                can_move22 = true;
+            }
+            if (can_move22) {
+                pacman_tweens[1][0] = true;
+                pacman_tweens[1][1] = current_position2;
+                pacman_tweens[1][2] = next_pos22;
+                pacman_tweens[1][3] = 0;
+                pacman_tweens[1][4] = current_direction2;
+            }
         }
-        if (input_key_down("k")) {
-            current_direction2 = "s";
-        }
-        if (input_key_down("l")) {
-            current_direction2 = "d";
-        }
-        if (current_direction2 !== "" && !collisionWall(current_direction2, current_position2)) {
-            velocity(current_direction2, current_position2, 1);
-        } else if (current_direction2 !== "" && collisionWall(current_direction2, current_position2)) {
-            // Stop movement if hitting a wall
-            current_direction2 = "";
-        }
-
-        update_position(pacman[1], current_position2);
     }
 }
 
@@ -781,7 +1088,6 @@ function update_new_position(dir, x, y) {
 function update_monsters() {
     for (let i = 0; i < array_length(monsters); i = i + 1) {
         const monster_info = monsters[i];
-        const sprite = get_array_element(monster_info, 0);
         let x = get_array_element(monster_info, 1);
         let y = get_array_element(monster_info, 2);
         let dir = get_array_element(monster_info, 3);
@@ -892,22 +1198,27 @@ function update_monsters() {
         const newx = get_array_element(newpos, 0);
         const newy = get_array_element(newpos, 1);
 
-        // renew the state
+        // Instead of updating position directly, set up a tween
+        monster_tweens[i][0] = true;
+        monster_tweens[i][1] = [x * TILE_SIZE, y * TILE_SIZE];
+        monster_tweens[i][2] = [newx * TILE_SIZE, newy * TILE_SIZE];
+        monster_tweens[i][3] = 0;
+        monster_tweens[i][4] = newdir;
+        // Update logical state for next move
         monsters[i][1] = newx;
         monsters[i][2] = newy;
         monsters[i][3] = newdir;
-        update_position(sprite, [x * TILE_SIZE, y * TILE_SIZE]);
-
-        // renew the image's direction
+        // Flip logic (keep as before)
         if (newdir === 2 || newdir === 3) {
             const shouldFlip = (newdir === 2);
             if (isLeft !== shouldFlip) {
-                update_flip(sprite, [shouldFlip, false]);
+                update_flip(monsters[i][0], [shouldFlip, false]);
                 monsters[i][4] = shouldFlip;
             }
         }
     }
 }
+
 
 
 function update_map(new_index) {
@@ -1101,7 +1412,9 @@ function show_gameMenu() {
     update_to_top(update_position(score_text, [480, 40]));
     update_to_top(update_position(pause_text, [230, 40]));
     update_to_top(update_position(pause_button, [300, 40]));
-    update_to_top(update_position(game_title, [80, 40]));
+    update_to_top(update_position(game_title, [60, 20]));
+    //update_to_top(update_position(level_text),[60,40]);
+    //update_to_top(update_position(lives_text),[60,60]);
 }
 
 function restart_game() {
@@ -1112,6 +1425,14 @@ function restart_game() {
     update_position(start_button, [800, 800]);
     update_position(win_text, [1000, 1000]);
     update_position(lose_text, [1000, 1000]);
+}
+
+// 新增下一关文本
+let next_level_text = undefined;
+function setup_next_level_text() {
+    next_level_text = create_text("Next Level!");
+    update_position(next_level_text, [3000, 4000]);
+    update_scale(next_level_text, [4, 4]);
 }
 
 
@@ -1191,7 +1512,7 @@ function game_loop(game_state) {
         } else {
 
             if (isWin) {
-                score = 0;
+                score = 0;//reset the score
 
                 // choose different map index
                 new_map_index = current_map_index;
@@ -1204,21 +1525,61 @@ function game_loop(game_state) {
 
                 update_score_display();
                 show_win_screen();
-                if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
+                if (pointer_over_gameobject(next_level_text) && input_left_mouse_down()) {
                     isWin = false;
                     hide_win_screen();
-                    startup = true;
-                    show_start_menu();
+
+                    //reset lives
+                    lives1 = 3;
+                    lives2 = 3;
+
+                    // level up
+                    gamelevel = gamelevel + 1;
+
+                    monsterThreshold = monsterThreshold * (1 - 0.05 * gamelevel);
+                    smartchance = smartchance * (1 + 0.5 * gamelevel);
+
+                    update_map(new_map_index); // 切换新地图
+                    show_game_screen();        // 直接进入下一关
                 }
             }
 
             else if (isLose) {
                 show_lose_screen();
+
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
                     isLose = false;
                     hide_lose_screen();
-                    rebornStart1 =rebornStart2 = get_game_time();
+                    rebornStart1 = rebornStart2 = get_game_time();
                     //count the time of reborn at this position
+                }
+            }
+
+            else if (isFail) {
+                // show the fail interface
+                show_fail_screen();
+                // reset all
+                if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
+                    isFail = false;
+                    hide_fail_screen();
+                    score = 0;
+                    gamelevel = 1;
+                    monsterThreshold = 700;
+                    smartchance = 0.21;
+                    isWin = false;
+                    isLose = false;
+                    isReborn1 = false;
+                    isReborn2 = false;
+                    rebornStart1 = 0;
+                    rebornStart2 = 0;
+                    // reset lives
+                    lives1 = 3;
+                    lives2 = 3;
+                    // get back to the main menu
+                    startup = true;
+
+                    reset_monsters();
+                    show_start_menu();
                 }
             }
 
@@ -1250,25 +1611,7 @@ function game_loop(game_state) {
                 } else {
                     update_color(pacman[1], [255, 0, 0, 255]);
                 }
-                // ...existing code...
 
-
-/*
-                if (isReborn) {
-                    // check the undefeated time
-                    if (get_game_time() - rebornStart > rebornTime) {
-                        isReborn = false;
-
-                    } else {
-                        //TODO : make an animation of blinking?
-                        //debug_log("reborn in progress");
-                        update_color(pacman[skin_index], [0, 255, 255, 255]);
-                    }
-                } else {
-                    //TODO
-                    update_color(pacman[skin_index], [255, 255, 0, 255]);
-                }
-*/
 
                 if (score === totalScore) {
                     isWin = true;
@@ -1283,13 +1626,28 @@ function game_loop(game_state) {
                     update_player_movement();
                     prevTime2 = get_game_time();
                 }
+
+                //update 
+                update_tweens();
+
                 // Check collisions
                 check_dot_collisions();
                 check_monster_collision();
 
                 debug_log("game_loop running");
                 count = count + 1;
+
+                //update_gamemenu
                 update_score_display();
+                if (mode === 1) {
+                    update_text(lives_text, "Lives1: " + stringify(lives1) + "  Lives2: " + stringify(lives2));
+                } else {
+                    update_text(lives_text, "Lives: " + stringify(lives1));
+                }
+                update_text(level_text, "Level: " + stringify(gamelevel));
+
+                update_to_top(update_position(lives_text, [80,  60]));
+                update_to_top(update_position(level_text, [80, 80]));
             }
         }
     }
@@ -1309,11 +1667,15 @@ function setup_pacman_game() {
     update_map(0); // Initialize with first map
     setup_monsters();
     setup_win_screen();
+    setup_fail_screen();
     setup_lose_screen();
     setup_restart();
+    setup_next_level_text(); // 初始化下一关文本
 }
 
+enable_debug();
 
 setup_pacman_game();
 update_loop(game_loop);
 build_game();
+
