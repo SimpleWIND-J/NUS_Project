@@ -27,8 +27,8 @@ const monsters = [];
 let walls = [];
 let dots = [];
 
-let current_map_index = 0 ;
-let new_map_index = 0 ;
+let current_map_index = 0;
+let new_map_index = 0;
 
 // the element in dots[] is in the format pair(obj,isate)
 const TILE_SIZE = 35;
@@ -92,6 +92,10 @@ let prevTime = 0;
 let prevTime2 = 0;
 
 
+
+//control the speed 
+const monsterThreshold = 700 ;
+const pacmanThershold = 250 ;
 
 //============================================================
 
@@ -157,6 +161,7 @@ function predic_wall(x, y) {
     }
 }
 
+/*
 function reset_all_dots() {
     for (let i = 0; i < array_length(dots); i = i + 1) {
         const dot_obj = head(dots[i]);
@@ -164,6 +169,7 @@ function reset_all_dots() {
         update_scale(dot_obj, [1, 1]);
     }
 }
+*/
 
 function get_valid_directions(x, y, exclude_dir) {
     const directions = [goup, godown, goleft, goright];
@@ -309,15 +315,17 @@ function setup_lose_screen() {
 
 // 1 -> wall , 0 ->coin ,
 
-   const tile_maps = [
-      [
+
+// the four tiles in the middle of the map is '0' , used to setup mons
+const tile_maps = [
+    [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
         [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1],
@@ -326,8 +334,8 @@ function setup_lose_screen() {
         [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1],
         [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-      ],
-      [
+    ],
+    [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1],
@@ -342,66 +350,70 @@ function setup_lose_screen() {
         [1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] 
-      ],
-      [
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    ],
+    [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1],
         [1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
-        [1, 0, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1],
-        [1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1],
-        [1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1],
+        [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1],
+        [1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1],
         [1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1],
         [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-      ] ];
+    ]];
 
 
 const walls_by_map = [];
 const dots_by_map = [];
 
 
-function setup_all_maps(){
-    
-     const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
-     const yellowdot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
-     const whitedot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/whiteball.png';
-     
-     for (let map_index = 0; map_index < array_length(tile_maps); 
-              map_index = map_index + 1){
-                  const map = tile_maps[map_index];
-                  const walls = [];
-                  const dots = [];
-            for (let row = 0; row < array_length(map); row = row + 1) {
-                for (let col = 0; col < array_length(map[row]); col = col + 1) {
-                
+const offset_x = 1;
+const offset_y = 3;
+// offset_x and offset_y are used to adjust the position of the tiles to fit the canvas
+
+function setup_all_maps() {
+
+    const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
+    const yellowdot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
+    const whitedot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/whiteball.png';
+
+    for (let map_index = 0; map_index < array_length(tile_maps);
+        map_index = map_index + 1) {
+        const map = tile_maps[map_index];
+        const walls = [];
+        const dots = [];
+        for (let row = 0; row < array_length(map); row = row + 1) {
+            for (let col = 0; col < array_length(map[row]); col = col + 1) {
+
                 const tile = map[row][col];
-                const pos = [(col + 1) * TILE_SIZE, (row + 3) * TILE_SIZE];
-                
+                const pos = [(col + offset_x) * TILE_SIZE, (row + offset_y) * TILE_SIZE];
+
                 if (tile === 1) {
                     const wall = create_sprite(wall_image_link);
-                    update_position(wall,pos);
-                    update_scale(wall,[0,0]);
+                    update_position(wall, pos);
+                    update_scale(wall, [0, 0]);
                     push(walls, wall);
                 }
                 else {
                     const dot = create_sprite(yellowdot_image_link);
-                    update_position(dot,pos);
-                    update_scale(dot,[0,0]);
-                    push(dots, pair(dot,false));
-                    
+                    update_position(dot, pos);
+                    update_scale(dot, [0, 0]);
+                    push(dots, pair(dot, false));
+
                 }
             }
         }
-        push(walls_by_map,walls);
-        push(dots_by_map,dots);
-              }
+        push(walls_by_map, walls);
+        push(dots_by_map, dots);
+    }
 }
 
 //-----------------------------------------------
@@ -424,72 +436,6 @@ function setup_player() {
     update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
     pacman = skins[skin_index];
 }
-
-
-/*
-// 1 -> wall , 0 ->coin ,
-function setup_maze_and_dots() {
-    tile_map = [
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1],
-        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
-        [1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1],
-        [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1],
-        [1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
-        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1],
-        [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    ];
-
-    const wall_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pinkwall.png';
-    const yellowdot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/yellowball.png';
-    const whitedot_image_link = 'https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/whiteball.png';
-
-    function render_map() {
-        for (let row = 0; row < array_length(tile_map); row = row + 1) {
-            const current_row = tile_map[row];
-            for (let col = 0; col < array_length(current_row); col = col + 1) {
-                const tile = current_row[col];
-                const pos = [(col + 1) * TILE_SIZE, (row + 3) * TILE_SIZE];
-                if (tile === 1) {
-                    push(walls, update_scale(update_position(create_sprite(wall_image_link), pos), [0, 0]));
-                }
-                else {
-                    push(dots, pair(update_scale(update_position(create_sprite(yellowdot_image_link), pos), [0, 0]), false));
-                    totalScore = totalScore + 1;
-                }
-            }
-        }
-    }
-
-    render_map();
-
-    // Position player at a valid starting position after map is created
-    let start_x = 1;
-    let start_y = 1;
-    // Look for first empty space in the map
-    for (let row = 0; row < array_length(tile_map); row = row + 1) {
-        for (let col = 0; col < array_length(tile_map[row]); col = col + 1) {
-            if (tile_map[row][col] === 0) {
-                start_x = col;
-                start_y = row;
-                break;
-            }
-        }
-        if (tile_map[start_y][start_x] === 0) {
-            break;
-        }
-    }
-
-    // Update pacman position to valid starting position
-    const start_pos = [(start_x + 1) * TILE_SIZE, (start_y + 3) * TILE_SIZE];
-    update_position(pacman, start_pos);
-}
-*/
 
 
 function setup_monsters() {
@@ -518,26 +464,86 @@ function setup_monsters() {
         //push(monsters, [sprite, x, y, direction]);
         return [sprite, x, y, direction, isLeft];
     }
-    for (let monsterIndex = 0; monsterIndex < array_length(imageLinks);
-        monsterIndex = monsterIndex + 1) {
-        push(monsters, build_monsters(10, 10, monsterIndex));
+
+
+    // the four monsters are created in the middle of the map
+    // the four monsters are created near the middle of the map
+    for (let monsterIndex = 0; monsterIndex < array_length(imageLinks); monsterIndex = monsterIndex + 1) {
+        if (monsterIndex === 0) {
+            push(monsters, build_monsters(7 + offset_x, 7 + offset_y, monsterIndex));
+        } else if (monsterIndex === 1) {
+            push(monsters, build_monsters(7 + offset_x, 8 + offset_y, monsterIndex));
+        } else if (monsterIndex === 2) {
+            push(monsters, build_monsters(8 + offset_x, 7 + offset_y, monsterIndex));
+        } else if (monsterIndex === 3) {
+            push(monsters, build_monsters(8 + offset_x, 8 + offset_y, monsterIndex));
+        }
+        // only four right now
+        else {
+            push(monsters, build_monsters(10, 10, monsterIndex));
+        }
+    }//setup all the monsters
+}
+
+
+function reset_monsters() {
+
+    for (let monsterIndex = 0; monsterIndex < array_length(monsters); monsterIndex = monsterIndex + 1) {
+        const monster_info = monsters[monsterIndex];
+        const sprite = get_array_element(monster_info, 0);
+        const isLeft = get_array_element(monster_info, 4);
+        // renew the image
+
+        const newdirection = math_floor(math_random() * 4);
+
+        let newisLeft = false;
+
+        //set the intial orientation of the image
+        if (newdirection === 2 && !isLeft) {
+            update_flip(sprite, [true, false]);
+            newisLeft = true;
+        }
+
+        else if (newdirection === 3 && isLeft) {
+            update_flip(sprite, [true, false]);
+            newisLeft = false;
+        }
+
+        // Reset position and direction
+        update_position(sprite, [1000, 2000]);
+
+        if (monsterIndex === 0) {
+            monsters[monsterIndex] = [sprite, 7 + offset_x, 7 + offset_y, newdirection, newisLeft];
+        } else if (monsterIndex === 1) {
+            monsters[monsterIndex] = [sprite, 7 + offset_x, 8 + offset_y, newdirection, newisLeft];
+        } else if (monsterIndex === 2) {
+            monsters[monsterIndex] = [sprite, 8 + offset_x, 7 + offset_y, newdirection, newisLeft];
+        } else if (monsterIndex === 3) {
+            monsters[monsterIndex] = [sprite, 8 + offset_x, 8 + offset_y, newdirection, newisLeft];
+        }
     }
-    //setup all the monsters
 }
 
 function setup_skin_menu() {
     options = create_text("Player Skins");
+
+
     skins[0] = create_sprite(up_url);
     update_position(skins[0], [2500, 2500]);
     update_scale(skins[0], [2, 2]);
+
+
     skins[1] = create_sprite(red_url);
     update_position(skins[1], [3500, 2500]);
     update_scale(skins[1], [3.5 / 50, 3.5 / 50]);
+
+
     prev = create_text("<");
     next = create_text(">");
     update_position(prev, [2000, 2500]);
     update_position(prev, [2500, 2500]);
     update_position(options, [2000, 2000]);
+
     // Create s_text for starting game from skin menu
     s_text = create_text("Start Game");
     update_position(s_text, [300, 350]);
@@ -711,7 +717,7 @@ function update_monsters() {
 
         //valid means that
         //no hitting the wall and not equal to the current direction
-        
+
         const valid_dirs = get_valid_directions(x, y, dir);
         const valid_num = array_length(valid_dirs);
 
@@ -723,12 +729,12 @@ function update_monsters() {
 
         // more than one valid direction , can apply smart mode
         if (valid_num >= 2) {
-            const use_smart_move = math_random() < 0.21; 
+            const use_smart_move = math_random() < 0.21;
             // 21% use judge-distance
             if (use_smart_move) {
                 let best_dir = dir;
                 let min_dist = 999999;
-                
+
                 for (let j = 0; j < valid_num; j = j + 1) {
                     const try_dir = get_array_element(valid_dirs, j);
                     const try_pos = update_new_position(try_dir, x, y);
@@ -754,12 +760,12 @@ function update_monsters() {
                 } else {
                     // we will only go into this case when this monster is
                     // surrounded by other monster , so just give a random
-                    newdir = valid_dirs[0] ; 
+                    newdir = valid_dirs[0];
                     //because of shuffle function , it is already a random dir
-                
+
                     //and we might not return oppsite_direction()
-                    
-            
+
+
                 }
             } else {
                 // 79% random
@@ -790,14 +796,14 @@ function update_monsters() {
             // highest priority , avoid  hitting the wall
             // no more thing to do 
 
-        } 
-        
-        
+        }
+
+
         // 2 cases in one valid-dir situation
         //    # # #          # # #
         //      O #            O
         //    #   #          # # #
-        
+
         else {
             const try_pos = update_new_position(valid_dirs[0], x, y);
             const try_x = get_array_element(try_pos, 0);
@@ -832,41 +838,41 @@ function update_monsters() {
 }
 
 
-function update_map (new_index){
-   
- 
+function update_map(new_index) {
+
+
     // hide old map
 
-    for (let i = 0; i < array_length(walls_by_map[current_map_index]); i = i + 1){
-      update_scale(walls_by_map[current_map_index][i],[0,0]);
+    for (let i = 0; i < array_length(walls_by_map[current_map_index]); i = i + 1) {
+        update_scale(walls_by_map[current_map_index][i], [0, 0]);
     }
-    for (let i = 0; i < array_length(dots_by_map[current_map_index]); i = i +1){
-      update_scale(head(dots_by_map[current_map_index][i]),[0,0]);
-      
-      //reset the condition
-      set_tail(dots_by_map[current_map_index][i],false);
+    for (let i = 0; i < array_length(dots_by_map[current_map_index]); i = i + 1) {
+        update_scale(head(dots_by_map[current_map_index][i]), [0, 0]);
+
+        //reset the condition
+        set_tail(dots_by_map[current_map_index][i], false);
     }
-     
-     
+
+
     //NEW MAP
     tile_map = tile_maps[new_index];
     // tile_map is a global variable , other functions can share it 
-    
+
     current_map_index = new_index;
     walls = walls_by_map[new_index];
     dots = dots_by_map[new_index];
     totalScore = array_length(dots);
-    
-    for (let i = 0; i < array_length(walls); i = i + 1){
-      update_scale(walls[i],[0,0]);
-      //TODO : use with "show_map(" together
-      
+
+    for (let i = 0; i < array_length(walls); i = i + 1) {
+        update_scale(walls[i], [0, 0]);
+        //TODO : use with "show_map(" together
+
     }
-    for (let i = 0; i < array_length(dots); i = i +1){
-      update_scale(head(dots[i]),[0,0]);
+    for (let i = 0; i < array_length(dots); i = i + 1) {
+        update_scale(head(dots[i]), [0, 0]);
     }
-    
-     // Position player at a valid starting position after map is created
+
+    // Position player at a valid starting position after map is created
     let start_x = 1;
     let start_y = 1;
     // Look for first empty space in the map
@@ -887,7 +893,7 @@ function update_map (new_index){
     const start_pos = [(start_x + 1) * TILE_SIZE, (start_y + 3) * TILE_SIZE];
     update_position(pacman, start_pos);
 
-    }
+}
 
 
 // === UI Functions ===
@@ -932,8 +938,11 @@ function update_score_display() {
 
 function show_game_screen() {
     hide_start_menu();
+
+    // hide select skin
     update_position(options, [1000, 1000]);
     update_position(s_text, [3000, 3000]);
+
     for (let i = 0; i < array_length(skins); i = i + 1) {
         update_position(skins[i], [5000, 5000]); // Hide all skins
     }
@@ -947,7 +956,9 @@ function show_game_screen() {
     pacman = skins[skin_index];
     update_position(next, [3000, 3000]);
     update_position(prev, [3100, 3100]);
+
     show_map();
+
     show_gameMenu();
 }
 
@@ -959,7 +970,7 @@ function show_start_menu() {
 function hide_start_menu() {
     update_position(title, [1500, 1000]);
     update_position(start_button, [2000, 1000]);
-    update_position(monsters[0][0], [350, 350]);
+    //update_position(monsters[0][0], [350, 350]);
 }
 
 function show_map() {
@@ -995,7 +1006,7 @@ function restart_game() {
 
 
 function game_loop(game_state) {
-    debug_log(count);
+    //debug_log(count);
 
     if (startup) {
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
@@ -1035,13 +1046,13 @@ function game_loop(game_state) {
 
                 // choose different map index
                 new_map_index = current_map_index;
-                while (new_map_index === current_map_index){
-                  new_map_index = math_floor(math_random() * array_length(tile_maps));
+                while (new_map_index === current_map_index) {
+                    new_map_index = math_floor(math_random() * array_length(tile_maps));
                 }
                 //update_map(new_index);
-                
 
-                
+                reset_monsters();
+
                 update_score_display();
                 show_win_screen();
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
@@ -1072,13 +1083,13 @@ function game_loop(game_state) {
                     isWin = true;
                 }
 
-                if (get_game_time() - prevTime > 700) {
+                if (get_game_time() - prevTime > monsterThreshold) {
                     update_monsters();
                     prevTime = get_game_time();
                 }
 
 
-                if (get_game_time() - prevTime2 > 180) {
+                if (get_game_time() - prevTime2 > pacmanThershold) {
                     update_player_movement();
                     prevTime2 = get_game_time();
                 }
