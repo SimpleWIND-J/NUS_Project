@@ -27,6 +27,11 @@ const monsters = [];
 let walls = [];
 let dots = [];
 
+//powerdots
+let powerdots = [];
+const power_duration = 5000;
+
+
 let current_map_index = 0;
 let new_map_index = 0;
 
@@ -224,15 +229,6 @@ function predic_wall(x, y) {
     }
 }
 
-/*
-function reset_all_dots() {
-    for (let i = 0; i < array_length(dots); i = i + 1) {
-        const dot_obj = head(dots[i]);
-        dots[i] = pair(dot_obj, false);
-        update_scale(dot_obj, [1, 1]);
-    }
-}
-*/
 
 function get_valid_directions(x, y, exclude_dir) {
     const directions = [goup, godown, goleft, goright];
@@ -294,24 +290,65 @@ function check_dot_collisions() {
     }
 }
 
+function check_powerdot_collisions() {
+    for (let i = 0; i < array_length(powerdots); i = i + 1) {
+        const dot_pair = powerdots[i];
+        const dot_obj = head(dot_pair);
+        const eaten_flag = tail(dot_pair);
+
+        if (!eaten_flag && gameobjects_overlap(pacman[0], dot_obj)) {
+            debug_log("Pacman hit powerdot!");
+
+            powerdots[i] = pair(dot_obj, true);
+            update_scale(dot_obj, [0, 0]);
+            power_mode = true;
+            power_timer = get_game_time();
+        }
+
+        if (mode === 1 && !eaten_flag && gameobjects_overlap(pacman[1], dot_obj)) {
+            powerdots[i] = pair(dot_obj, true);
+            update_scale(dot_obj, [0, 0]);
+            power_mode = true;
+            power_timer = get_game_time();
+        }
+    }
+}
+
+
 function check_monster_collision() {
     for (let i = 0; i < array_length(monsters); i = i + 1) {
         const m = monsters[i][0];
         // player1
         if (gameobjects_overlap(m, pacman[0])) {
-            if (!power_mode && !isReborn1) {
+            if (power_mode) {
+                update_scale(m, [0, 0]);
+                debug_log("Monster defeated by power mode!");
+                monsters[i][5] = get_game_time();
+            }
+
+            else if (!isReborn1) {
                 lives1 = lives1 - 1;
                 if (lives1 > 0) {
                     isLose = true;
                     isReborn1 = true;
-                } else {
+                }
+
+                else {
                     isFail = true;
                 }
             }
         }
+
+
+
         // player2
         if (gameobjects_overlap(m, pacman[1])) {
-            if (!power_mode && !isReborn2) {
+
+            if (power_mode) {
+                update_position(m, [4000, 3000]);
+                monsters[i][5] = get_game_time();
+            }
+            else if (!isReborn2) {
                 lives2 = lives2 - 1;
                 if (lives2 > 0) {
                     isLose = true;
@@ -336,7 +373,7 @@ function check_monster_collision() {
 //--------- UI FUNCTIONS     ------------------
 function setup_canvas() {
     set_dimensions([canvas_width, canvas_height]); //TODO
-    set_fps(100);
+    set_fps(150);
 }
 
 function setup_startup_screen() {
@@ -419,6 +456,8 @@ function setup_lose_screen() {
 
 // 1 -> wall , 0 ->coin ,
 
+// 1 -> wall , 0 ->coin ,
+
 
 // the four tiles in the middle of the map is '0' , used to setup mons
 const tile_maps = [
@@ -431,25 +470,25 @@ const tile_maps = [
         [1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1],
         [1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-        [1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 2, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1],
         [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1],
         [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1],
         [1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1],
-        [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1],
+        [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 2, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     ],
     [
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
         [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1],
-        [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 2, 1],
         [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
         [1, 0, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
         [1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1],
-        [1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1],
+        [1, 0, 1, 1, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 1, 1],
         [1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1],
         [1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1],
         [1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
@@ -465,18 +504,19 @@ const tile_maps = [
         [1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1],
         [1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 1],
         [1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1],
-        [1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 2, 1],
         [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1],
         [1, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1],
-        [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
+        [1, 2, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 1],
         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     ]];
 
 
 const walls_by_map = [];
 const dots_by_map = [];
+const powerdots_by_map = [];
 
 
 const offset_x = 1;
@@ -494,6 +534,7 @@ function setup_all_maps() {
         const map = tile_maps[map_index];
         const walls = [];
         const dots = [];
+        const powerdots = [];
         for (let row = 0; row < array_length(map); row = row + 1) {
             for (let col = 0; col < array_length(map[row]); col = col + 1) {
 
@@ -505,21 +546,25 @@ function setup_all_maps() {
                     update_position(wall, pos);
                     update_scale(wall, [0, 0]);
                     push(walls, wall);
+                } else if (tile === 2) {
+                    const pd = create_sprite(whitedot_image_link);
+                    update_position(pd, pos);
+                    update_scale(pd, [0, 0]);
+                    push(powerdots, pair(pd, false));
                 }
                 else {
                     const dot = create_sprite(yellowdot_image_link);
                     update_position(dot, pos);
                     update_scale(dot, [0, 0]);
                     push(dots, pair(dot, false));
-
                 }
             }
         }
         push(walls_by_map, walls);
         push(dots_by_map, dots);
+        push(powerdots_by_map, powerdots);
     }
 }
-
 //-----------------------------------------------
 
 
@@ -590,7 +635,7 @@ function setup_monsters() {
         else {
             push(monsters, build_monsters(10, 10, monsterIndex));
         }
-    }//setup all the monsters    
+    }//setup all the monsters
 
     monster_tweens = [];
     for (let i = 0; i < array_length(monsters); i = i + 1) {
@@ -601,6 +646,9 @@ function setup_monsters() {
 
 }
 
+
+
+//==========   RESET FUNCTIONS   ===============
 
 function reset_monsters() {
 
@@ -639,6 +687,79 @@ function reset_monsters() {
         }
     }
 }
+
+
+
+function reset_game_parameters() {
+
+    score = 0;
+
+    gamelevel = 1;
+    monsterThreshold = 700;
+    smartchance = 0.21;
+    isWin = false;
+    isLose = false;
+    isReborn1 = false;
+    isReborn2 = false;
+    rebornStart1 = 0;
+    rebornStart2 = 0;
+    // reset lives
+    lives1 = 3;
+    lives2 = 3;
+
+}
+
+
+
+//? call the function after changing the map
+function reset_pacman() {
+    let start_x = 1;
+    let start_y = 1;
+    for (let row = 0; row < array_length(tile_map); row = row + 1) {
+        for (let col = 0; col < array_length(tile_map[row]); col = col + 1) {
+            if (tile_map[row][col] === 0) {
+                start_x = col;
+                start_y = row;
+                break;
+            }
+        }
+        if (tile_map[start_y][start_x] === 0) {
+            break;
+        }
+    }
+    const start_pos = [(start_x + offset_x) * TILE_SIZE, (start_y + offset_y) * TILE_SIZE];
+    update_position(pacman[0], start_pos);
+    //! reset the tween state
+    pacman_tweens[0] = [false, start_pos, start_pos, 0, ""];
+
+    //* multi mode
+    if (mode === 1) {
+        let start_x2 = 1;
+        let start_y2 = 1;
+        for (let row = 0; row < array_length(tile_map); row = row + 1) {
+            for (let col = 0; col < array_length(tile_map[row]); col = col + 1) {
+                if (tile_map[row][col] === 0 && (col !== start_x || row !== start_y)) {
+                    start_x2 = col;
+                    start_y2 = row;
+                    break;
+                }
+            }
+            if (tile_map[start_y2][start_x2] === 0 && (start_x2 !== start_x || start_y2 !== start_y)) {
+                break;
+            }
+        }
+        const start_pos2 = [(start_x2 + offset_x) * TILE_SIZE, (start_y2 + offset_y) * TILE_SIZE];
+        update_position(pacman[1], start_pos2);
+        //!reset the tween state 
+        pacman_tweens[1] = [false, start_pos2, start_pos2, 0, ""];
+    }
+}
+
+
+
+//==============================================
+
+
 
 function setup_skin_menu() {
     options = create_text("Player Skins");
@@ -744,7 +865,7 @@ function update_tweens() {
             if (
                 row - 3 < 0 || row - 3 >= array_length(tile_map) ||
                 col - 1 < 0 || col - 1 >= array_length(tile_map[0]) ||
-                tile_map[row - 3][col - 1] !== 0
+                tile_map[row - 3][col - 1] === 1
             ) {
                 is_wall = true;
             }
@@ -808,7 +929,7 @@ function update_tweens() {
                 if (
                     nrow - 3 >= 0 && nrow - 3 < array_length(tile_map) &&
                     ncol - 1 >= 0 && ncol - 1 < array_length(tile_map[0]) &&
-                    tile_map[nrow - 3][ncol - 1] === 0
+                    tile_map[nrow - 3][ncol - 1] !== 1
                 ) {
                     can_move = true;
                 }
@@ -909,7 +1030,7 @@ function update_player_movement() {
             if (
                 row >= 0 && row < array_length(tile_map) &&
                 col >= 0 && col < array_length(tile_map[0]) &&
-                tile_map[row][col] === 0
+                tile_map[row][col] !== 1
             ) {
                 can_move = true;
             }
@@ -935,12 +1056,12 @@ function update_player_movement() {
         const next_pos = [current_position[0] + v[0], current_position[1] + v[1]];
         let can_move = false;
         if (try_dir !== "") {
-            let col = math_floor(next_pos[0] / TILE_SIZE) - 1;
-            let row = math_floor(next_pos[1] / TILE_SIZE) - 3;
+            let col = math_floor(next_pos[0] / TILE_SIZE) - offset_x;
+            let row = math_floor(next_pos[1] / TILE_SIZE) - offset_y;
             if (
                 row >= 0 && row < array_length(tile_map) &&
                 col >= 0 && col < array_length(tile_map[0]) &&
-                tile_map[row][col] === 0
+                tile_map[row][col] !== 1    //! not a wall
             ) {
                 can_move = true;
             }
@@ -966,7 +1087,7 @@ function update_player_movement() {
             if (
                 row2 >= 0 && row2 < array_length(tile_map) &&
                 col2 >= 0 && col2 < array_length(tile_map[0]) &&
-                tile_map[row2][col2] === 0
+                tile_map[row2][col2] !== 1
             ) {
                 can_move2 = true;
             }
@@ -1000,7 +1121,7 @@ function update_player_movement() {
             if (
                 row2 >= 0 && row2 < array_length(tile_map) &&
                 col2 >= 0 && col2 < array_length(tile_map[0]) &&
-                tile_map[row2][col2] === 0
+                tile_map[row2][col2] !== 1
             ) {
                 can_move2 = true;
             }
@@ -1029,7 +1150,7 @@ function update_player_movement() {
             if (
                 row2 >= 0 && row2 < array_length(tile_map) &&
                 col2 >= 0 && col2 < array_length(tile_map[0]) &&
-                tile_map[row2][col2] === 0
+                tile_map[row2][col2] !== 1
             ) {
                 can_move2 = true;
             }
@@ -1054,7 +1175,7 @@ function update_player_movement() {
             if (
                 row22 >= 0 && row22 < array_length(tile_map) &&
                 col22 >= 0 && col22 < array_length(tile_map[0]) &&
-                tile_map[row22][col22] === 0
+                tile_map[row22][col22] !== 1
             ) {
                 can_move22 = true;
             }
@@ -1086,8 +1207,36 @@ function update_new_position(dir, x, y) {
 
 
 function update_monsters() {
+    const MONSTER_REBORN_TIME = 5000;
+
+
     for (let i = 0; i < array_length(monsters); i = i + 1) {
         const monster_info = monsters[i];
+        const rebornStart = monster_info[5];
+
+        if (rebornStart !== undefined && get_game_time() - rebornStart > MONSTER_REBORN_TIME) {
+
+            const sprite = monster_info[0];
+            update_scale(
+                update_position(sprite, [8 * TILE_SIZE, 8 * TILE_SIZE]),
+                [1, 1]);
+            monster_info[1] = 8 + offset_x;
+            monster_info[2] = 8 + offset_y;
+            monster_info[3] = math_floor(math_random() * 4);
+            monster_info[5] = undefined;
+        }
+    }
+
+    for (let i = 0; i < array_length(monsters); i = i + 1) {
+
+
+        const monster_info = monsters[i];
+
+        if (monster_info[5] !== undefined) {
+            continue;
+        }//* Skip monsters that are currently reborn
+
+
         let x = get_array_element(monster_info, 1);
         let y = get_array_element(monster_info, 2);
         let dir = get_array_element(monster_info, 3);
@@ -1185,7 +1334,7 @@ function update_monsters() {
         else if (valid_num === 0) {
             newdir = opposite_direction(dir);
             // highest priority , avoid  hitting the wall
-            // no more thing to do 
+            // no more thing to do
 
         }
 
@@ -1244,10 +1393,16 @@ function update_map(new_index) {
     }
     for (let i = 0; i < array_length(dots_by_map[current_map_index]); i = i + 1) {
         update_scale(head(dots_by_map[current_map_index][i]), [0, 0]);
-
-        //reset the condition
         set_tail(dots_by_map[current_map_index][i], false);
     }
+
+    for (let i = 0; i < array_length(powerdots_by_map[current_map_index]); i = i + 1) {
+        update_scale(head(powerdots_by_map[current_map_index][i]), [0, 0]);
+        set_tail(powerdots_by_map[current_map_index][i], false);
+    }
+    //reset the condition
+
+
 
 
     //NEW MAP
@@ -1257,6 +1412,7 @@ function update_map(new_index) {
     current_map_index = new_index;
     walls = walls_by_map[new_index];
     dots = dots_by_map[new_index];
+    powerdots = powerdots_by_map[new_index];
     totalScore = array_length(dots);
 
     for (let i = 0; i < array_length(walls); i = i + 1) {
@@ -1268,47 +1424,8 @@ function update_map(new_index) {
         update_scale(head(dots[i]), [0, 0]);
     }
 
-    // Position player at a valid starting position after map is created
-    let start_x = 1;
-    let start_y = 1;
-    // Look for first empty space in the map
-    for (let row = 0; row < array_length(tile_map); row = row + 1) {
-        for (let col = 0; col < array_length(tile_map[row]); col = col + 1) {
-            if (tile_map[row][col] === 0) {
-                start_x = col;
-                start_y = row;
-                break;
-            }
-        }
-        if (tile_map[start_y][start_x] === 0) {
-            break;
-        }
-    }
-
-    // Update pacman position to valid starting position
-    const start_pos = [(start_x + 1) * TILE_SIZE, (start_y + 3) * TILE_SIZE];
-    //update_position(pacman[0], start_pos);
-
-    // Handle second pacman in multi-mode
-    if (mode === 1) {
-        // Find a different valid starting position for the second player
-        let start_x2 = 1;
-        let start_y2 = 1;
-        // Look for a different empty space in the map
-        for (let row = 0; row < array_length(tile_map); row = row + 1) {
-            for (let col = 0; col < array_length(tile_map[row]); col = col + 1) {
-                if (tile_map[row][col] === 0 && (col !== start_x || row !== start_y)) {
-                    start_x2 = col;
-                    start_y2 = row;
-                    break;
-                }
-            }
-            if (tile_map[start_y2][start_x2] === 0 && (start_x2 !== start_x || start_y2 !== start_y)) {
-                break;
-            }
-        }
-        const start_pos2 = [(start_x2 + 1) * TILE_SIZE, (start_y2 + 3) * TILE_SIZE];
-        update_position(pacman[1], start_pos2);
+    for (let i = 0; i < array_length(powerdots); i = i + 1) {
+        update_scale(head(powerdots[i]), [0, 0]);
     }
 
 }
@@ -1370,6 +1487,8 @@ function show_game_screen() {
     } else {
         update_scale(skins[skin_index], [33 / 46, 33 / 45]);
     }
+
+
     update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
     pacman[0] = skins[skin_index];
     update_to_top(pacman[0]); // Ensure pacman is visible
@@ -1393,9 +1512,14 @@ function show_game_screen() {
     update_position(next, [3000, 3000]);
     update_position(prev, [3100, 3100]);
 
+
     show_map();
 
     show_gameMenu();
+
+    reset_pacman();
+
+    //update_position(pacman[0],[TILE_SIZE*2,TILE_SIZE*4]);
 }
 
 function show_start_menu() {
@@ -1418,6 +1542,10 @@ function show_map() {
     // resize the coin
     for (let i = 0; i < array_length(dots); i = i + 1) {
         update_scale(head(dots[i]), [1, 1]);
+    }
+
+    for (let i = 0; i < array_length(powerdots); i = i + 1) {
+        update_scale(head(powerdots[i]), [1, 1]);
     }
 }
 
@@ -1482,6 +1610,7 @@ function game_loop(game_state) {
         // Handle s_text global variable click to show game screen
         if (pointer_over_gameobject(s_text) && input_left_mouse_down()) {
             show_game_screen();
+
             // Always set correct scale and bring to top after position update
             if (skin_index === 1) {
                 update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
@@ -1495,7 +1624,9 @@ function game_loop(game_state) {
         if (pointer_over_gameobject(mode_multi) && input_left_mouse_down()) {
             mode = 1;
             update_map(new_map_index);
+            reset_pacman(); // Reset pacman position and color
             show_game_screen();
+
             // Always set correct scale and bring to top after position update for both pacmen
             if (skin_index === 1) {
                 update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
@@ -1535,6 +1666,7 @@ function game_loop(game_state) {
                 //update_map(new_map_index);
 
                 reset_monsters();
+                reset_pacman();
 
                 update_score_display();
                 show_win_screen();
@@ -1552,8 +1684,9 @@ function game_loop(game_state) {
                     monsterThreshold = monsterThreshold * (1 - 0.05 * gamelevel);
                     smartchance = smartchance * (1 + 0.5 * gamelevel);
 
-                    update_map(new_map_index); // 切换新地图
-                    show_game_screen();        // 直接进入下一关
+                    update_map(new_map_index);
+                    //reset_pacman();            
+                    show_game_screen();      //TODO: pacman is not reset properly  
                 }
             }
 
@@ -1575,19 +1708,8 @@ function game_loop(game_state) {
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
                     isFail = false;
                     hide_fail_screen();
-                    score = 0;
-                    gamelevel = 1;
-                    monsterThreshold = 700;
-                    smartchance = 0.21;
-                    isWin = false;
-                    isLose = false;
-                    isReborn1 = false;
-                    isReborn2 = false;
-                    rebornStart1 = 0;
-                    rebornStart2 = 0;
-                    // reset lives
-                    lives1 = 3;
-                    lives2 = 3;
+                    reset_game_parameters();
+
                     // get back to the main menu
                     startup = true;
 
@@ -1596,7 +1718,22 @@ function game_loop(game_state) {
                 }
             }
 
+            //? main game loop
             else {
+
+                //* power mode
+                if (power_mode && get_game_time() - power_timer > 5000) {
+                    power_mode = false;
+                }
+
+                if (power_mode) {
+                    debug_log("Power Mode Active");
+                    update_color(pacman[0], [0, 255, 255, 255]);
+                    if (mode === 1) {
+                        update_color(pacman[1], [0, 255, 0, 255]);
+                    }
+                }
+
                 if (pointer_over_gameobject(pause_button) && input_left_mouse_down()) {
                     isPaused = true;
                 }
@@ -1611,8 +1748,9 @@ function game_loop(game_state) {
                     } else {
                         update_color(pacman[0], [0, 255, 255, 255]);
                     }
-                } else {
+                } else if (!power_mode) {
                     update_color(pacman[0], [255, 255, 0, 255]);
+                    //!otherwise, it will be set to yellow even in power mode
                 }
                 // player2
                 if (isReborn2) {
@@ -1645,6 +1783,7 @@ function game_loop(game_state) {
 
                 // Check collisions
                 check_dot_collisions();
+                check_powerdot_collisions();
                 check_monster_collision();
 
                 debug_log("game_loop running");
@@ -1683,7 +1822,7 @@ function setup_pacman_game() {
     setup_fail_screen();
     setup_lose_screen();
     setup_restart();
-    setup_next_level_text(); 
+    setup_next_level_text();
 }
 
 //enable_debug();
