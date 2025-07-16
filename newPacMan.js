@@ -6,26 +6,38 @@
 import {
     set_dimensions, set_fps, enable_debug, debug_log,
     query_pointer_position, input_left_mouse_down,
-    create_circle,
+    create_rectangle,
     pointer_over_gameobject,
     get_game_time, update_to_top,
     update_flip,
     update_position, create_text, update_text, gameobjects_overlap, update_scale,
     update_loop, build_game, create_sprite, set_scale, update_color, query_position,
-    input_key_down, update_rotation
+    input_key_down, update_rotation, play_audio, stop_audio, loop_audio, create_audio
 } from 'arcade_2d';
 
 
 
+
 // === Global GameObjects and State ========================
+
+
 const up_url = "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pacmanUp.png";
 const red_url = "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/red_pacman1.png";
-const url_arr = [up_url, red_url];
-let pacman = [];
+const url_arr = [[up_url, "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/pacmanClosed.png"], [red_url, "https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/refs/heads/main/images/red_closed.png"]];
+let pacman = [[], []];
 const monsters = [];
 // the element in monsters[] is in the format [obj,x,y,dir]
 let walls = [];
 let dots = [];
+
+//music
+const menuMusic = create_audio("https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/main/audio/game%20menu.mp3", 0.5);
+loop_audio(menuMusic);
+const backgroundMusic = create_audio("https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/main/audio/game%20background.wav", 0.5);
+loop_audio(backgroundMusic);
+const startsound = create_audio("https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/main/audio/game%20start.mp3", 0.5);
+const winsound = create_audio("https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/main/audio/gamewin.mp3", 0.5);
+const losesound = create_audio("https://raw.githubusercontent.com/SimpleWIND-J/NUS_Project/main/audio/gameover.wav", 0.5);
 
 //powerdots
 let powerdots = [];
@@ -48,7 +60,7 @@ let game_title = undefined;
 
 //skin menu
 let options = undefined;
-let skins = [];
+let skins = [[], []];
 let skin_index = 0;
 let skin_index2 = 1;
 let next = undefined;
@@ -87,6 +99,7 @@ let isLose = false;
 
 //restart
 let restart_text = undefined;
+let restart_button = undefined;
 
 let tile_map = [];
 let isPaused = false;
@@ -108,7 +121,7 @@ let prevTime2 = 0;
 
 //control the speed
 let monsterThreshold = 700;
-let pacmanThershold = 220;
+let pacmanThershold = 250;
 
 // game level
 let gamelevel = 1;
@@ -131,7 +144,30 @@ let isFail = false; // Flag to indicate if the game is over
 
 
 
+let overlay_rect = undefined;
 
+
+function setup_overlay() {
+
+
+    overlay_rect = update_color(create_rectangle(canvas_width - 200, canvas_height - 100), [0, 0, 0, 180]);
+    update_position(overlay_rect, [5000, 5000]);
+
+}
+
+
+function show_overlay() {
+
+    update_position(overlay_rect, [canvas_width / 2, canvas_height / 2]);
+    //update_to_top(overlay_rect);
+}
+
+
+function hide_overlay() {
+
+    update_position(overlay_rect, [5000, 5000]);
+
+}
 
 
 
@@ -144,11 +180,13 @@ function setup_fail_screen() {
 }
 
 function show_fail_screen() {
+    show_overlay();
     update_to_top(update_position(fail_text, [300, 200]));
     show_restart();
 }
 
 function hide_fail_screen() {
+    hide_overlay();
     update_position(fail_text, [3000, 4000]);
     hide_restart_screen();
 }
@@ -207,7 +245,7 @@ function distance(x1, y1, x2, y2) {
 
 
 
-
+/*
 function add_vectors(to, from) {
     to[0] = to[0] + from[0];
     to[1] = to[1] + from[1];
@@ -217,6 +255,7 @@ function add_vectors(to, from) {
 function add_vectors_new(a, b) {
     return [a[0] + b[0], a[1] + b[1]];
 }
+*/
 
 
 function predic_wall(x, y) {
@@ -276,13 +315,13 @@ function check_dot_collisions() {
         const dot_obj = head(dot_pair);
         const eaten_flag = tail(dot_pair);
 
-        if (!eaten_flag && gameobjects_overlap(pacman[0], dot_obj)) {
+        if (!eaten_flag && gameobjects_overlap(pacman[0][0], dot_obj)) {
             dots[i] = pair(dot_obj, true);
             update_scale(dot_obj, [0, 0]);
             score = score + 1;
         }
         // Check collision for second player in multi-mode
-        if (mode === 1 && !eaten_flag && gameobjects_overlap(pacman[1], dot_obj)) {
+        if (mode === 1 && !eaten_flag && gameobjects_overlap(pacman[1][0], dot_obj)) {
             dots[i] = pair(dot_obj, true);
             update_scale(dot_obj, [0, 0]);
             score = score + 1;
@@ -296,7 +335,7 @@ function check_powerdot_collisions() {
         const dot_obj = head(dot_pair);
         const eaten_flag = tail(dot_pair);
 
-        if (!eaten_flag && gameobjects_overlap(pacman[0], dot_obj)) {
+        if (!eaten_flag && gameobjects_overlap(pacman[0][0], dot_obj)) {
             debug_log("Pacman hit powerdot!");
 
             powerdots[i] = pair(dot_obj, true);
@@ -305,7 +344,7 @@ function check_powerdot_collisions() {
             power_timer = get_game_time();
         }
 
-        if (mode === 1 && !eaten_flag && gameobjects_overlap(pacman[1], dot_obj)) {
+        if (mode === 1 && !eaten_flag && gameobjects_overlap(pacman[1][0], dot_obj)) {
             powerdots[i] = pair(dot_obj, true);
             update_scale(dot_obj, [0, 0]);
             power_mode = true;
@@ -319,7 +358,7 @@ function check_monster_collision() {
     for (let i = 0; i < array_length(monsters); i = i + 1) {
         const m = monsters[i][0];
         // player1
-        if (gameobjects_overlap(m, pacman[0])) {
+        if (gameobjects_overlap(m, pacman[0][0])) {
             if (power_mode) {
                 update_scale(m, [0, 0]);
                 debug_log("Monster defeated by power mode!");
@@ -335,6 +374,8 @@ function check_monster_collision() {
 
                 else {
                     isFail = true;
+                    stop_audio(backgroundMusic);
+                    play_audio(losesound);
                 }
             }
         }
@@ -342,7 +383,7 @@ function check_monster_collision() {
 
 
         // player2
-        if (gameobjects_overlap(m, pacman[1])) {
+        if (gameobjects_overlap(m, pacman[1][0])) {
 
             if (power_mode) {
                 update_position(m, [4000, 3000]);
@@ -392,6 +433,8 @@ function setup_startup_screen() {
     mode_multi = create_text("Multiplayer");
     update_scale(mode_multi, [2, 2]);
     update_position(mode_multi, [300, 450]);
+
+    play_audio(menuMusic);
 }
 
 function setup_pause_menu() {
@@ -432,6 +475,10 @@ function setup_gameMenu() {
     level_text = create_text("Level: 1");
     update_position(level_text, [80, 1100]);
     update_scale(level_text, [1.1, 1.1]);
+
+    restart_button = create_text("Restart");
+    update_position(restart_button, [5400, 40]);
+    update_scale(restart_button, [1, 1]);
 }
 
 function setup_win_screen() {
@@ -571,23 +618,26 @@ function setup_all_maps() {
 //--------- GAME OBJ ----------------------------
 
 function setup_player() {
-    // Create all pacman skin sprites, hide all except the default
+    // Create all pacman skin sprites (open and closed), hide all except the default
     for (let i = 0; i < array_length(url_arr); i = i + 1) {
-        skins[i] = create_sprite(url_arr[i]);
-        if (i === 1) {
-            update_scale(skins[i], [3.4 / 50, 3.4 / 50]);
-        } else {
-            update_scale(skins[i], [33 / 46, 33 / 45]);
+        for (let j = 0; j < array_length(url_arr[i]); j = j + 1) {
+            skins[i][j] = create_sprite(url_arr[i][j]);
+            if (i === 1) {
+                update_scale(skins[i][j], [3.4 / 50, 3.4 / 50]);
+            } else {
+                update_scale(skins[i][j], [33 / 46, 33 / 45]);
+            }
+            update_position(skins[i][j], [5000, 5000]); // Hide initially
         }
-        update_position(skins[i], [5000, 5000]); // Hide initially
     }
-    // Show the default skin
-    // update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
-    pacman[0] = skins[skin_index];
-
-    // Create second pacman for multi-mode (will be positioned later when mode is set)
-    pacman[1] = skins[skin_index2];
-    update_position(pacman[1], [5000, 5000]); // Hide initially
+    // Assign open and closed sprites for player 1 and 2
+    pacman[0][0] = skins[0][0]; // open
+    pacman[0][1] = skins[0][1]; // closed
+    pacman[1][0] = skins[1][0]; // open
+    pacman[1][1] = skins[1][1]; // closed
+    // Hide both closed sprites initially
+    update_position(pacman[0][1], [5000, 5000]);
+    update_position(pacman[1][1], [5000, 5000]);
 }
 
 
@@ -654,6 +704,10 @@ function reset_monsters() {
 
     for (let monsterIndex = 0; monsterIndex < array_length(monsters); monsterIndex = monsterIndex + 1) {
         const monster_info = monsters[monsterIndex];
+
+        update_scale(get_array_element(monster_info, 0), [1, 1]);
+        // reset the monster position and direction
+
         const sprite = get_array_element(monster_info, 0);
         const isLeft = get_array_element(monster_info, 4);
         // renew the image
@@ -687,7 +741,6 @@ function reset_monsters() {
         }
     }
 }
-
 
 
 function reset_game_parameters() {
@@ -728,7 +781,7 @@ function reset_pacman() {
         }
     }
     const start_pos = [(start_x + offset_x) * TILE_SIZE, (start_y + offset_y) * TILE_SIZE];
-    update_position(pacman[0], start_pos);
+    update_position(pacman[0][0], start_pos);
     //! reset the tween state
     pacman_tweens[0] = [false, start_pos, start_pos, 0, ""];
 
@@ -749,7 +802,7 @@ function reset_pacman() {
             }
         }
         const start_pos2 = [(start_x2 + offset_x) * TILE_SIZE, (start_y2 + offset_y) * TILE_SIZE];
-        update_position(pacman[1], start_pos2);
+        update_position(pacman[1][0], start_pos2);
         //!reset the tween state 
         pacman_tweens[1] = [false, start_pos2, start_pos2, 0, ""];
     }
@@ -765,14 +818,14 @@ function setup_skin_menu() {
     options = create_text("Player Skins");
 
 
-    skins[0] = create_sprite(up_url);
-    update_position(skins[0], [2500, 2500]);
-    update_scale(skins[0], [2, 2]);
+    skins[0][0] = create_sprite(up_url);
+    update_position(skins[0][0], [2500, 2500]);
+    update_scale(skins[0][0], [2, 2]);
 
 
-    skins[1] = create_sprite(red_url);
-    update_position(skins[1], [3500, 2500]);
-    update_scale(skins[1], [3.4 / 50, 3.4 / 50]);
+    skins[1][0] = create_sprite(red_url);
+    update_position(skins[1][0], [3500, 2500]);
+    update_scale(skins[1][0], [3.4 / 50, 3.4 / 50]);
 
 
     prev = create_text("<");
@@ -801,14 +854,16 @@ function setup_skin_menu() {
 
 //============== SHOW AND HIDE FUNCTIONS ==================
 function show_win_screen() {
+    show_overlay();
     update_to_top(update_position(win_text, [300, 200]));
     update_to_top(update_position(next_level_text, [300, 400]));
     for (let i = 0; i < array_length(pacman); i = i + 1) {
-        update_position(pacman[i], [3500, 3500]);
+        update_position(pacman[i][0], [3500, 3500]);
     }
 }
 
 function hide_win_screen() {
+    hide_overlay();
     update_position(win_text, [2000, 3000]);
     update_position(next_level_text, [3000, 4200]);
 }
@@ -816,6 +871,7 @@ function hide_win_screen() {
 
 
 function show_lose_screen() {
+    show_overlay();
     update_to_top(update_position(lose_text, [300, 200]));
     //update_position(single_text,[3100,3100]);
     show_restart();
@@ -824,16 +880,7 @@ function show_lose_screen() {
 function hide_lose_screen() {
     update_position(lose_text, [2000, 3000]);
     hide_restart_screen();
-}
-
-
-function show_restart() {
-    update_to_top(update_position(restart_text, [300, 400]));
-    //update_position(single_text,[300,500]);
-}
-
-function hide_restart_screen() {
-    update_position(restart_text, [2000, 3000]);
+    hide_overlay();
 }
 
 
@@ -853,8 +900,46 @@ let pacman_tweens = [
     [false, [0, 0], [0, 0], 0, ""]  // for player 2
 ];
 let monster_tweens = [];
+// === Chomping Animation State ===
+let chomping_timer = [0, 0]; // [last toggle time for p0, p1]
+let chomping_state = [0, 0]; // 0=open, 1=closed for each pacman
+let pacman_rotation = [0, 0]; // Store last applied rotation for each pacman
+
 
 function update_tweens() {
+    // Chomping animation for both Pac-Men
+    const now = get_game_time();
+    for (let p = 0; p < 2; p = p + 1) {
+        // Sync closed sprite's position, scale, and rotation with open
+        const pos = query_position(pacman[p][0]);
+        update_position(pacman[p][1], pos);
+        // Copy scale
+        let scale = [1, 1];
+        if (p === 0) {
+            scale = (skin_index === 1) ? [3.4 / 50, 3.4 / 50] : [35 / 46, 35 / 45];
+        } else {
+            scale = (skin_index2 === 1) ? [3.4 / 50, 3.4 / 50] : [35 / 46, 35 / 45];
+        }
+        update_scale(pacman[p][1], scale);
+        // Copy rotation from pacman_rotation
+        update_rotation(pacman[p][1], pacman_rotation[p]);
+        // Chomping toggle every 180ms
+        if (now - chomping_timer[p] > 180) {
+            chomping_state[p] = 1 - chomping_state[p];
+            chomping_timer[p] = now;
+        }
+        // Set color for visibility
+        let open_color = [255, 255, 0, 255];
+        let closed_color = [255, 255, 0, 255];
+        if (p === 1) { open_color = [255, 0, 0, 255]; closed_color = [255, 0, 0, 255]; }
+        if (chomping_state[p] === 0) {
+            update_color(pacman[p][0], open_color); // show open
+            update_color(pacman[p][1], [closed_color[0], closed_color[1], closed_color[2], 0]); // hide closed
+        } else {
+            update_color(pacman[p][0], [open_color[0], open_color[1], open_color[2], 0]); // hide open
+            update_color(pacman[p][1], closed_color); // show closed
+        }
+    }
     for (let p = 0; p < 2; p = p + 1) {
         if (pacman_tweens[p][0]) {
             // Check if the end position is a wall BEFORE interpolating
@@ -874,41 +959,41 @@ function update_tweens() {
                 const start = pacman_tweens[p][1];
                 let scol = math_round(start[0] / TILE_SIZE);
                 let srow = math_round(start[1] / TILE_SIZE);
-                update_position(pacman[p], [scol * TILE_SIZE, srow * TILE_SIZE]);
+                update_position(pacman[p][0], [scol * TILE_SIZE, srow * TILE_SIZE]);
                 // Re-apply correct scale
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                        update_scale(pacman[0][0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[1][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                        update_scale(pacman[1][0], [35 / 46, 35 / 45]);
                     }
                 }
                 pacman_tweens[p][0] = false;
                 continue;
             }
-            pacman_tweens[p][3] = pacman_tweens[p][3] + 0.05;
+            pacman_tweens[p][3] = pacman_tweens[p][3] + 0.04;
             if (pacman_tweens[p][3] >= 1) {
                 // Snap to center of target tile
                 let ecol = math_round(pacman_tweens[p][2][0] / TILE_SIZE);
                 let erow = math_round(pacman_tweens[p][2][1] / TILE_SIZE);
-                update_position(pacman[p], [ecol * TILE_SIZE, erow * TILE_SIZE]);
+                update_position(pacman[p][0], [ecol * TILE_SIZE, erow * TILE_SIZE]);
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                        update_scale(pacman[0][0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[1][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                        update_scale(pacman[1][0], [35 / 46, 35 / 45]);
                     }
                 }
                 pacman_tweens[p][0] = false;
@@ -952,18 +1037,18 @@ function update_tweens() {
                 const spos = [scol * TILE_SIZE, srow * TILE_SIZE];
                 const epos = [ecol * TILE_SIZE, erow * TILE_SIZE];
                 const pos = [spos[0] + (epos[0] - spos[0]) * t, spos[1] + (epos[1] - spos[1]) * t];
-                update_position(pacman[p], pos);
+                update_position(pacman[p][0], pos);
                 if (p === 0) {
                     if (skin_index === 1) {
-                        update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[0], [35 / 46, 35 / 45]);
+                        update_scale(pacman[0][0], [35 / 46, 35 / 45]);
                     }
                 } else {
                     if (skin_index2 === 1) {
-                        update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
+                        update_scale(pacman[1][0], [3.4 / 50, 3.4 / 50]);
                     } else {
-                        update_scale(pacman[1], [35 / 46, 35 / 45]);
+                        update_scale(pacman[1][0], [35 / 46, 35 / 45]);
                     }
                 }
             }
@@ -990,10 +1075,15 @@ function update_tweens() {
 function update_player_movement() {
     const movement_dist = TILE_SIZE;
     // Player 1
-    // Only update desired_direction on key press (not while held)
-    let direction_changed = false;
+    // Update desired_direction on every frame for higher responsiveness
     let desired_direction = "";
     let desired_direction2 = "";
+    if (input_key_down("w")) { desired_direction = "w"; }
+    if (input_key_down("a")) { desired_direction = "a"; }
+    if (input_key_down("s")) { desired_direction = "s"; }
+    if (input_key_down("d")) { desired_direction = "d"; }
+    // Only update desired_direction on key press (not while held)
+    let direction_changed = desired_direction !== current_direction;
     let key_w = false;
     let key_a = false;
     let key_s = false;
@@ -1016,12 +1106,12 @@ function update_player_movement() {
     } else { key_d = false; }
     // If a direction key was pressed and Pac-Man is tweening, try to change direction immediately if possible
     if (pacman_tweens[0][0] && direction_changed) {
-        const pos = query_position(pacman[0]);
+        const pos = query_position(pacman[0][0]);
         let v = [0, 0];
-        if (desired_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
-        if (desired_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
-        if (desired_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
-        if (desired_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+        if (desired_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0][0], 0); }
+        if (desired_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 1.5); }
+        if (desired_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0][0], math_PI); }
+        if (desired_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 0.5); }
         const next_pos = [pos[0] + v[0], pos[1] + v[1]];
         let can_move = false;
         if (desired_direction !== "") {
@@ -1045,14 +1135,14 @@ function update_player_movement() {
         }
     }
     if (!pacman_tweens[0][0]) {
-        const current_position = query_position(pacman[0]);
+        const current_position = query_position(pacman[0][0]);
         // Try desired_direction first
         let v = [0, 0];
         let try_dir = desired_direction !== "" ? desired_direction : current_direction;
-        if (try_dir === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
-        if (try_dir === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
-        if (try_dir === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
-        if (try_dir === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+        if (try_dir === "w") { v = [0, -movement_dist]; update_rotation(pacman[0][0], 0); }
+        if (try_dir === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 1.5); }
+        if (try_dir === "s") { v = [0, movement_dist]; update_rotation(pacman[0][0], math_PI); }
+        if (try_dir === "d") { v = [movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 0.5); }
         const next_pos = [current_position[0] + v[0], current_position[1] + v[1]];
         let can_move = false;
         if (try_dir !== "") {
@@ -1076,10 +1166,10 @@ function update_player_movement() {
         } else if (current_direction !== "") {
             // Try to continue in current direction if desired is not possible
             v = [0, 0];
-            if (current_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0], 0); }
-            if (current_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0], math_PI * 1.5); }
-            if (current_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0], math_PI); }
-            if (current_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0], math_PI * 0.5); }
+            if (current_direction === "w") { v = [0, -movement_dist]; update_rotation(pacman[0][0], 0); }
+            if (current_direction === "a") { v = [-movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 1.5); }
+            if (current_direction === "s") { v = [0, movement_dist]; update_rotation(pacman[0][0], math_PI); }
+            if (current_direction === "d") { v = [movement_dist, 0]; update_rotation(pacman[0][0], math_PI * 0.5); }
             const next_pos2 = [current_position[0] + v[0], current_position[1] + v[1]];
             let can_move2 = false;
             let col2 = math_floor(next_pos2[0] / TILE_SIZE) - 1;
@@ -1107,12 +1197,12 @@ function update_player_movement() {
     if (input_key_down("k")) { desired_direction2 = "s"; direction_changed2 = true; }
     if (input_key_down("l")) { desired_direction2 = "d"; direction_changed2 = true; }
     if (mode === 1 && pacman_tweens[1][0] && direction_changed2) {
-        const pos2 = query_position(pacman[1]);
+        const pos2 = query_position(pacman[1][0]);
         let v2 = [0, 0];
-        if (desired_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
-        if (desired_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
-        if (desired_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
-        if (desired_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+        if (desired_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1][0], 0); }
+        if (desired_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 1.5); }
+        if (desired_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1][0], math_PI); }
+        if (desired_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 0.5); }
         const next_pos2 = [pos2[0] + v2[0], pos2[1] + v2[1]];
         let can_move2 = false;
         if (desired_direction2 !== "") {
@@ -1135,13 +1225,13 @@ function update_player_movement() {
         }
     }
     if (mode === 1 && !pacman_tweens[1][0]) {
-        const current_position2 = query_position(pacman[1]);
+        const current_position2 = query_position(pacman[1][0]);
         let v2 = [0, 0];
         let try_dir2 = desired_direction2 !== "" ? desired_direction2 : current_direction2;
-        if (try_dir2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
-        if (try_dir2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
-        if (try_dir2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
-        if (try_dir2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+        if (try_dir2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1][0], 0); }
+        if (try_dir2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 1.5); }
+        if (try_dir2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1][0], math_PI); }
+        if (try_dir2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 0.5); }
         const next_pos2 = [current_position2[0] + v2[0], current_position2[1] + v2[1]];
         let can_move2 = false;
         if (try_dir2 !== "") {
@@ -1164,10 +1254,10 @@ function update_player_movement() {
             current_direction2 = try_dir2;
         } else if (current_direction2 !== "") {
             v2 = [0, 0];
-            if (current_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1], 0); }
-            if (current_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1], math_PI * 1.5); }
-            if (current_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1], math_PI); }
-            if (current_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1], math_PI * 0.5); }
+            if (current_direction2 === "w") { v2 = [0, -movement_dist]; update_rotation(pacman[1][0], 0); }
+            if (current_direction2 === "a") { v2 = [-movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 1.5); }
+            if (current_direction2 === "s") { v2 = [0, movement_dist]; update_rotation(pacman[1][0], math_PI); }
+            if (current_direction2 === "d") { v2 = [movement_dist, 0]; update_rotation(pacman[1][0], math_PI * 0.5); }
             const next_pos22 = [current_position2[0] + v2[0], current_position2[1] + v2[1]];
             let can_move22 = false;
             let col22 = math_floor(next_pos22[0] / TILE_SIZE) - 1;
@@ -1271,7 +1361,7 @@ function update_monsters() {
                     // the collision of monster havr higher priority than the
                     // "smart" mode
                     if (!is_occupied(try_x, try_y, i)) {
-                        const pacman0_position = query_position(pacman[0]);
+                        const pacman0_position = query_position(pacman[0][0]);
                         const pacman0_x = pacman0_position[0] / TILE_SIZE;
                         const pacman0_y = pacman0_position[1] / TILE_SIZE;
                         const d0 = distance(try_x, try_y, pacman0_x, pacman0_y);
@@ -1282,7 +1372,7 @@ function update_monsters() {
 
                         if (mode === 1) {
                             // if mode is 1 , we have two pacman
-                            const pacman1_position = query_position(pacman[1]);
+                            const pacman1_position = query_position(pacman[1][0]);
                             const pacman1_x = pacman1_position[0] / TILE_SIZE;
                             const pacman1_y = pacman1_position[1] / TILE_SIZE;
                             const d1 = distance(try_x, try_y, pacman1_x, pacman1_y);
@@ -1440,15 +1530,19 @@ function show_skin_menu() {
     update_scale(options, [3, 3]);
     // Hide all skins
     for (let i = 0; i < array_length(skins); i = i + 1) {
-        update_position(skins[i], [2500, 2500]);
+        update_position(skins[i][0], [2500, 2500]);
+        update_position(skins[i][1], [2500, 2500]);
     }
     // Show only the current skin
     if (skin_index === 1) {
-        update_scale(skins[skin_index], [3.3 / 50, 3.3 / 50]);
+        update_scale(skins[skin_index][0], [3.3 / 50, 3.3 / 50]);
+        update_scale(skins[skin_index][1], [3.3 / 50, 3.3 / 50]);
     } else {
-        update_scale(skins[skin_index], [33 / 46, 33 / 45]);
+        update_scale(skins[skin_index][0], [33 / 46, 33 / 45]);
+        update_scale(skins[skin_index][1], [33 / 46, 33 / 45]);
     }
-    update_position(skins[skin_index], [300, 200]);
+    update_position(skins[skin_index][0], [300, 200]);
+    update_position(skins[skin_index][1], [300, 200]);
     update_position(prev, [100, 200]);
     update_scale(prev, [1.5, 1.5]);
     update_position(next, [500, 200]);
@@ -1458,11 +1552,13 @@ function show_skin_menu() {
 }
 
 function show_pause_menu() {
+    show_overlay();
     update_to_top(update_position(pause_title, [300, 200]));
     update_to_top(update_position(resume_button, [300, 300]));
 }
 
 function hide_pause_menu() {
+    hide_overlay();
     update_position(pause_title, [1000, 1000]);
     update_position(resume_button, [1000, 1000]);
 }
@@ -1472,6 +1568,7 @@ function update_score_display() {
 }
 
 function show_game_screen() {
+    play_audio(backgroundMusic);
     hide_start_menu();
 
     // hide select skin
@@ -1479,34 +1576,43 @@ function show_game_screen() {
     update_position(s_text, [3000, 3000]);
 
     for (let i = 0; i < array_length(skins); i = i + 1) {
-        update_position(skins[i], [5000, 5000]); // Hide all skins
+        update_position(skins[i][0], [5000, 5000]); // Hide all skins
+        update_position(skins[i][1], [5000, 5000]); // Hide all skins
     }
     // Show only the selected skin at the starting position
     if (skin_index === 1) {
-        update_scale(skins[skin_index], [3.3 / 50, 3.3 / 50]);
+        update_scale(skins[skin_index][0], [3.3 / 50, 3.3 / 50]);
+        update_scale(skins[skin_index][1], [3.3 / 50, 3.3 / 50]);
     } else {
-        update_scale(skins[skin_index], [33 / 46, 33 / 45]);
+        update_scale(skins[skin_index][0], [33 / 46, 33 / 45]);
+        update_scale(skins[skin_index][1], [33 / 46, 33 / 45]);
     }
 
 
-    update_position(skins[skin_index], [2 * TILE_SIZE, 4 * TILE_SIZE]);
-    pacman[0] = skins[skin_index];
-    update_to_top(pacman[0]); // Ensure pacman is visible
+    update_position(skins[skin_index][0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+    pacman[0][0] = skins[skin_index][0];
+    update_to_top(pacman[0][0]); // Ensure pacman is visible
 
     // Handle multi-mode
     if (mode === 1) {
         if (skin_index2 === 1) {
-            update_scale(skins[skin_index2], [3.3 / 50, 3.3 / 50]);
+            update_scale(skins[skin_index2][0], [3.3 / 50, 3.3 / 50]);
+            update_scale(skins[skin_index2][1], [3.3 / 50, 3.3 / 50]);
         } else {
-            update_scale(skins[skin_index2], [33 / 46, 33 / 45]);
+            update_scale(skins[skin_index2][0], [33 / 46, 33 / 45]);
+            update_scale(skins[skin_index2][1], [33 / 46, 33 / 45]);
         }
         // Position second pacman in a valid corridor (column 13, row 5)
-        update_position(skins[skin_index2], [13 * TILE_SIZE, 5 * TILE_SIZE]);
-        pacman[1] = skins[skin_index2];
-        update_to_top(pacman[1]); // Ensure second pacman is visible
+        update_position(skins[skin_index2][0], [13 * TILE_SIZE, 5 * TILE_SIZE]);
+        pacman[1][0] = skins[skin_index2][0];
+        update_to_top(pacman[1][0]); // Ensure second pacman is visible
+        update_position(skins[skin_index2][1], [13 * TILE_SIZE, 5 * TILE_SIZE]);
+        pacman[1][1] = skins[skin_index2][1];
+        update_to_top(pacman[1][1]); // Ensure second pacman is visible
     } else {
         // Hide second pacman in single player mode
-        update_position(pacman[1], [5000, 5000]);
+        update_position(pacman[1][0], [5000, 5000]);
+        update_position(pacman[1][1], [5000, 5000]);
     }
 
     update_position(next, [3000, 3000]);
@@ -1525,14 +1631,56 @@ function show_game_screen() {
 function show_start_menu() {
     update_to_top(update_position(title, [300, 150]));
     update_to_top(update_position(start_button, [300, 350]));
+
+    update_to_top(update_position(options, [300, 400]));
+    update_to_top(update_position(mode_multi, [300, 450]));
 }
+
 
 function hide_start_menu() {
     update_position(title, [1500, 1000]);
     update_position(start_button, [2000, 1000]);
     update_position(mode_multi, [5000, 5000]);
-    //update_position(monsters[0][0], [350, 350]);
+    update_position(options, [1000, 1000]);
+    update_position(s_text, [3000, 3000]);
 }
+
+function hide_map() {
+    for (let i = 0; i < array_length(walls); i = i + 1) {
+        update_scale(walls[i], [0, 0]);
+    }
+    for (let i = 0; i < array_length(dots); i = i + 1) {
+        update_scale(head(dots[i]), [0, 0]);
+    }
+    for (let i = 0; i < array_length(powerdots); i = i + 1) {
+        update_scale(head(powerdots[i]), [0, 0]);
+    }
+}
+
+function hide_monsters() {
+    for (let i = 0; i < array_length(monsters); i = i + 1) {
+        update_scale(monsters[i][0], [0, 0]);
+    }
+}
+
+function hide_pacman() {
+    for (let i = 0; i < array_length(pacman); i = i + 1) {
+        for (let j = 0; j < array_length(pacman[i]); j = j + 1) {
+            update_position(pacman[i][j], [5000, 5000]);
+        }
+    }
+}
+
+
+function show_restart() {
+    update_to_top(update_position(restart_text, [300, 400]));
+    //update_position(single_text,[300,500]);
+}
+
+function hide_restart_screen() {
+    update_position(restart_text, [2000, 3000]);
+}
+
 
 function show_map() {
     //resize the wall
@@ -1549,26 +1697,24 @@ function show_map() {
     }
 }
 
+
 function show_gameMenu() {
     update_to_top(update_position(score_text, [480, 40]));
     update_to_top(update_position(pause_text, [230, 40]));
     update_to_top(update_position(pause_button, [300, 40]));
     update_to_top(update_position(game_title, [60, 20]));
-    //update_to_top(update_position(level_text),[60,40]);
-    //update_to_top(update_position(lives_text),[60,60]);
+    update_to_top(update_position(restart_button, [540, 80]));
 }
 
-function restart_game() {
-    score = 0;
-    power_mode = false;
-    power_timer = 0;
-    update_position(title, [1000, 1000]);
-    update_position(start_button, [800, 800]);
-    update_position(win_text, [1000, 1000]);
-    update_position(lose_text, [1000, 1000]);
+function hide_gameMenu() {
+    update_position(score_text, [1000, 1000]);
+    update_position(pause_text, [1000, 1000]);
+    update_position(pause_button, [1000, 1000]);
+    update_position(game_title, [1000, 1000]);
+    update_position(restart_button, [1000, 1000]);
 }
 
-// 新增下一关文本
+
 let next_level_text = undefined;
 function setup_next_level_text() {
     next_level_text = create_text("Next Level!");
@@ -1584,17 +1730,23 @@ function game_loop(game_state) {
     //debug_log(count);
 
     if (startup) {
+        reset_monsters();
+        //TODO: reset_pacman();
         if (pointer_over_gameobject(start_button) && input_left_mouse_down()) {
+            play_audio(startsound);
+            stop_audio(menuMusic);
+            play_audio(backgroundMusic);
+
             update_map(new_map_index);
             show_game_screen();
             // Always set correct scale and bring to top after position update
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
             } else {
-                update_scale(pacman[0], [35 / 46, 35 / 45]);
+                update_scale(pacman[0][0], [35 / 46, 35 / 45]);
             }
-            update_position(pacman[0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
-            update_to_top(pacman[0]);
+            update_position(pacman[0][0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+            update_to_top(pacman[0][0]);
             startup = false;
         } if (pointer_over_gameobject(options) && input_left_mouse_down()) {
             show_skin_menu();
@@ -1613,12 +1765,12 @@ function game_loop(game_state) {
 
             // Always set correct scale and bring to top after position update
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
             } else {
-                update_scale(pacman[0], [35 / 46, 35 / 45]);
+                update_scale(pacman[0][0], [35 / 46, 35 / 45]);
             }
-            update_position(pacman[0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
-            update_to_top(pacman[0]);
+            update_position(pacman[0][0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+            update_to_top(pacman[0][0]);
             startup = false;
         }
         if (pointer_over_gameobject(mode_multi) && input_left_mouse_down()) {
@@ -1629,19 +1781,19 @@ function game_loop(game_state) {
 
             // Always set correct scale and bring to top after position update for both pacmen
             if (skin_index === 1) {
-                update_scale(pacman[0], [3.4 / 50, 3.4 / 50]);
+                update_scale(pacman[0][0], [3.4 / 50, 3.4 / 50]);
             } else {
-                update_scale(pacman[0], [35 / 46, 35 / 45]);
+                update_scale(pacman[0][0], [35 / 46, 35 / 45]);
             }
-            update_position(pacman[0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
-            update_to_top(pacman[0]);
+            update_position(pacman[0][0], [2 * TILE_SIZE, 4 * TILE_SIZE]);
+            update_to_top(pacman[0][0]);
             if (skin_index2 === 1) {
-                update_scale(pacman[1], [3.4 / 50, 3.4 / 50]);
+                update_scale(pacman[1][0], [3.4 / 50, 3.4 / 50]);
             } else {
-                update_scale(pacman[1], [33 / 46, 33 / 45]);
+                update_scale(pacman[1][0], [33 / 46, 33 / 45]);
             }
-            update_position(pacman[1], [13 * TILE_SIZE, 5 * TILE_SIZE]);
-            update_to_top(pacman[1]);
+            update_position(pacman[1][0], [13 * TILE_SIZE, 5 * TILE_SIZE]);
+            update_to_top(pacman[1][0]);
             startup = false;
         }
 
@@ -1656,6 +1808,9 @@ function game_loop(game_state) {
         } else {
 
             if (isWin) {
+                //stop_audio(backgroundMusic);
+                //play_audio(winsound);
+
                 score = 0;//reset the score
 
                 // choose different map index
@@ -1685,8 +1840,8 @@ function game_loop(game_state) {
                     smartchance = smartchance * (1 + 0.5 * gamelevel);
 
                     update_map(new_map_index);
-                    //reset_pacman();            
-                    show_game_screen();      //TODO: pacman is not reset properly  
+                    reset_pacman();
+                    show_game_screen();
                 }
             }
 
@@ -1702,12 +1857,21 @@ function game_loop(game_state) {
             }
 
             else if (isFail) {
+                //stop_audio(backgroundMusic);
+                //play_audio(losesound);
+
                 // show the fail interface
+                show_overlay();
                 show_fail_screen();
                 // reset all
                 if (pointer_over_gameobject(restart_text) && input_left_mouse_down()) {
                     isFail = false;
+                    hide_overlay();
                     hide_fail_screen();
+                    hide_map();
+                    hide_gameMenu();
+                    hide_monsters();
+                    hide_pacman();
                     reset_game_parameters();
 
                     // get back to the main menu
@@ -1721,6 +1885,22 @@ function game_loop(game_state) {
             //? main game loop
             else {
 
+                if (pointer_over_gameobject(restart_button) && input_left_mouse_down()) {
+                    reset_game_parameters();
+
+                    reset_pacman();
+                    startup = true;
+                    show_start_menu();
+                    hide_gameMenu();
+                    hide_map();
+
+                    hide_monsters();
+
+                    hide_pacman();
+                    //TODO: hide pacman is not working
+                }
+
+
                 //* power mode
                 if (power_mode && get_game_time() - power_timer > 5000) {
                     power_mode = false;
@@ -1728,9 +1908,9 @@ function game_loop(game_state) {
 
                 if (power_mode) {
                     debug_log("Power Mode Active");
-                    update_color(pacman[0], [0, 255, 255, 255]);
+                    update_color(pacman[0][0], [0, 255, 255, 255]);
                     if (mode === 1) {
-                        update_color(pacman[1], [0, 255, 0, 255]);
+                        update_color(pacman[1][0], [0, 255, 0, 255]);
                     }
                 }
 
@@ -1746,10 +1926,10 @@ function game_loop(game_state) {
                     if (get_game_time() - rebornStart1 > rebornTime) {
                         isReborn1 = false;
                     } else {
-                        update_color(pacman[0], [0, 255, 255, 255]);
+                        update_color(pacman[0][0], [0, 255, 255, 255]);
                     }
                 } else if (!power_mode) {
-                    update_color(pacman[0], [255, 255, 0, 255]);
+                    update_color(pacman[0][0], [255, 255, 0, 255]);
                     //!otherwise, it will be set to yellow even in power mode
                 }
                 // player2
@@ -1757,15 +1937,17 @@ function game_loop(game_state) {
                     if (get_game_time() - rebornStart2 > rebornTime) {
                         isReborn2 = false;
                     } else {
-                        update_color(pacman[1], [0, 0, 255, 255]);
+                        update_color(pacman[1][0], [0, 0, 255, 255]);
                     }
                 } else {
-                    update_color(pacman[1], [255, 0, 0, 255]);
+                    update_color(pacman[1][0], [255, 0, 0, 255]);
                 }
 
 
                 if (score === totalScore) {
                     isWin = true;
+                    stop_audio(backgroundMusic);
+                    play_audio(winsound);
                 }
 
                 if (get_game_time() - prevTime > monsterThreshold) {
@@ -1778,7 +1960,7 @@ function game_loop(game_state) {
                     prevTime2 = get_game_time();
                 }
 
-                //update 
+                //update
                 update_tweens();
 
                 // Check collisions
@@ -1818,6 +2000,7 @@ function setup_pacman_game() {
     setup_all_maps();
     update_map(0); // Initialize with first map
     setup_monsters();
+    setup_overlay();
     setup_win_screen();
     setup_fail_screen();
     setup_lose_screen();
@@ -1831,3 +2014,176 @@ setup_pacman_game();
 update_loop(game_loop);
 build_game();
 
+
+
+
+
+
+
+
+
+
+
+//*  A* pathfinding for grid-based map
+function astar_find_path(start, goal, tile_map) {
+    const rows = array_length(tile_map);
+    const cols = array_length(get_array_element(tile_map, 0));
+    const openSet = [];
+    // openSet will contain the keys of positions to be (or we say being) evaluated
+    const closedSet = [];
+
+    // use {} ?
+    const cameFrom = {};
+    const gScore = {};
+    const fScore = {};
+
+    // [x, y] -> string key
+    function pos_key(pos) {
+        return stringify(get_array_element(pos, 0))
+            + ","
+            + stringify(get_array_element(pos, 1));
+    }
+
+    function parse_pos(key) {
+        // key: "x,y" -> [x, y]
+        const arr = [];
+        let idx = 0;
+        let num = "";
+        for (let i = 0; i < length(key); i = i + 1) {
+            const ch = char_at(key, i);
+            if (ch === ",") {
+                arr[idx] = parse_int(num);
+                idx = idx + 1;
+                num = "";
+            } else {
+                num = num + ch;
+            }
+        }
+        arr[idx] = parse_int(num);
+        return arr;
+    }
+
+    function neighbors(pos) {
+        const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        const result = [];
+        for (let i = 0; i < 4; i = i + 1) {
+            const nx = get_array_element(pos, 0)
+                + get_array_element(get_array_element(dirs, i), 0);
+            const ny = get_array_element(pos, 1)
+                + get_array_element(get_array_element(dirs, i), 1);
+            if (nx >= 0
+                && nx < cols
+                && ny >= 0
+                && ny < rows
+                && get_array_element(get_array_element(tile_map, ny), nx) !== 1) {
+                push(result, [nx, ny]);
+                // if not a wall, add to neighbors
+            }
+        }
+        return result;
+    }
+
+    //? we use Manhattan distance as heuristic
+    function heuristic(a, b) {
+        return math_abs(get_array_element(a, 0)
+            - get_array_element(b, 0))
+            + math_abs(get_array_element(a, 1)
+                - get_array_element(b, 1));
+    }
+
+    const startKey = pos_key(start);
+    push(openSet, startKey);
+
+    //? a* uses gScore and fScore to track the cost of the path
+    //? gScore: cost from start to current node
+    //? fScore: estimated cost from start to goal through current node
+    gScore[startKey] = 0;
+    fScore[startKey] = heuristic(start, goal);
+
+    while (array_length(openSet) > 0) {
+        // check all the openSet to find the node with the lowest fScore
+        // this is the current node we are evaluating
+        let currentKey = get_array_element(openSet, 0);
+        let currentIdx = 0;
+        for (let i = 1; i < array_length(openSet); i = i + 1) {
+            if ((fScore[get_array_element(openSet, i)] || 99999)
+                < (fScore[currentKey] || 99999)) {
+                currentKey = get_array_element(openSet, i);
+                currentIdx = i;
+            }
+        }
+        const current = parse_pos(currentKey);
+
+        // if we reach the goal, we can reconstruct the path
+        if (get_array_element(current, 0) === get_array_element(goal, 0)
+            && get_array_element(current, 1) === get_array_element(goal, 1)) {
+            const path = [];
+            let ck = currentKey;
+            while (cameFrom[ck]) {
+                push(path, parse_pos(ck));
+                ck = cameFrom[ck];
+            }
+
+            // reverse the path to get from start to goal
+            const rev = [];
+            for (let i = array_length(path) - 1; i >= 0; i = i - 1) {
+                push(rev, get_array_element(path, i));
+            }
+            return rev;
+        }
+
+        // remove current from openSet and add to closedSet
+        const newOpenSet = [];
+        for (let i = 0; i < array_length(openSet); i = i + 1) {
+            if (i !== currentIdx) {
+                push(newOpenSet, get_array_element(openSet, i));
+            }
+        }
+        openSet = newOpenSet;
+
+        push(closedSet, currentKey);
+
+        // check neighbors of current node
+        // and update their gScore and fScore
+        const ns = neighbors(current);
+        for (let i = 0; i < array_length(ns); i = i + 1) {
+            const neighbor = get_array_element(ns, i);
+            const neighborKey = pos_key(neighbor);
+            let closed = false;
+
+            // if neighbor is in closedSet(already explored), skip it
+            for (let j = 0; j < array_length(closedSet); j = j + 1) {
+                if (get_array_element(closedSet, j) === neighborKey) {
+                    closed = true;
+                }
+            }
+            if (closed) { continue; }
+
+            // if neighbor is in current openSet, we can skip it , 
+            // 'cause we already have a better path to it
+            const tentative_gScore = (gScore[currentKey] || 99999) + 1;
+            let inOpen = false;
+            for (let j = 0; j < array_length(openSet); j = j + 1) {
+                if (get_array_element(openSet, j) === neighborKey) {
+                    inOpen = true;
+                }
+            }
+
+            // if neighbor is not in openSet, we need to add it
+            // or update its gScore and fScore if we found a better path
+            if (!inOpen) {
+                push(openSet, neighborKey);
+            } else if (tentative_gScore >= (gScore[neighborKey] || 99999)) {
+                continue;
+            }
+
+            // update the cameFrom, gScore and fScore for the neighbor
+            // we use the current node as the previous node for the neighbor
+            // this is how we reconstruct the path later
+            cameFrom[neighborKey] = currentKey;
+            gScore[neighborKey] = tentative_gScore;
+            fScore[neighborKey] = tentative_gScore + heuristic(neighbor, goal);
+        }
+    }
+    return []; // no path found
+}
