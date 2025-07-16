@@ -7,11 +7,13 @@ in the theme of "Pacman"
 
 
 ***About mode***
+
 The default mode is "single player mode" and you can select your own skin or select multi-player mode
 
 To control the 2 players in the multi-player mode , use "W A S D" or "I J K L"
 
 ***Game rules***
+
 Try to avoid all the "monsters" and eat as much 'coins'(the yellow dots) as you can !
 
 When all the coins are ate , you enter the next level(where the monsters will be faster and "smarter")
